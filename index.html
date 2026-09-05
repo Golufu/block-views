@@ -242,17 +242,19 @@ footer .ver{display:block;margin-top:4px;font-family:"IBM Plex Mono",monospace;f
 @media (max-width:820px){
   body{padding:10px 12px 26px}
   .wrap{gap:10px}
-  h1{font-size:19px}
-  header{align-items:center;gap:10px;padding-bottom:8px}
+  h1{font-size:17px}
+  header{align-items:center;gap:10px;padding-bottom:6px}
+  .modes button{padding:5px 12px;font-size:13px}
   header .brand{flex-direction:row;align-items:baseline;flex:1;min-width:0}
   header p{display:none}
   .modes button{padding:6px 13px;font-size:13.5px}
 
   /* รูปทรงอยู่บน ตารางอยู่ล่าง — ต้องเห็นครบในหน้าจอเดียว */
-  .bench{grid-template-columns:1fr;gap:6px}
+  .bench{grid-template-columns:1fr;gap:10px}
   .gutter{display:none}
   .panel > .head{display:none}
-  .panel .body{padding:8px;gap:6px}
+  .panel{border:0;background:transparent;box-shadow:none}
+  .panel .body{padding:0;gap:6px}
 
   /* กล่องใหญ่ขึ้น ชื่อโจทย์ย้ายมาลอยบนเวที */
   .stage{aspect-ratio:auto;height:clamp(190px,32vh,310px);height:clamp(190px,32dvh,310px)}
@@ -422,7 +424,7 @@ footer .ver{display:block;margin-top:4px;font-family:"IBM Plex Mono",monospace;f
   </section>
 
   <footer>สื่อฝึกมองภาพสามมิติ — ลากรูปทรงเพื่อหมุนดูได้ทุกด้าน กดปุ่ม <b>มุมเฉียง</b> เพื่อคืนตำแหน่งเดิม
-    <span class="ver">รุ่น A5 · จอกว้าง <b id="vwOut">–</b> px · <b id="layoutOut">–</b></span>
+    <span class="ver">รุ่น A6 · จอกว้าง <b id="vwOut">–</b> px · <b id="layoutOut">–</b></span>
   </footer>
 </div>
 
@@ -608,8 +610,10 @@ function draw(){
   ctx.clearRect(0,0,W,H);
   ctx.fillStyle = PAL.sunk; ctx.fillRect(0,0,W,H);
   var f = frame(S.yaw, S.pitch), d = f.d, u = f.u, r = f.r;
-  var rad = 0.5*Math.hypot(p.w,p.d,p.h);
-  var sc = Math.min(W,H)/(2*rad*1.2)*S.zoom;
+  var diag = Math.hypot(p.w, p.d);
+  var cb = Math.abs(Math.cos(S.pitch*RAD)), sb = Math.abs(Math.sin(S.pitch*RAD));
+  var spanX = diag, spanY = p.h*cb + diag*sb;
+  var sc = Math.min(W/spanX, H/spanY)*0.92*S.zoom;
   var cx = W/2, cy = H/2;
   function proj(x,y,z){
     return [ (x*r[0]+y*r[1]+z*r[2])*sc + cx, -(x*u[0]+y*u[1]+z*u[2])*sc + cy ];
@@ -807,7 +811,7 @@ function restyleAll(){
 function renderGrid(){
   var p = S.pz, g = gridSpec(p, p.ask), pad = $("#grid");
   var cs = window.innerWidth <= 820
-    ? 96                                    /* เริ่มใหญ่สุด แล้วให้ fitGridToScreen หดตามที่ว่างจริง */
+    ? 128                                   /* เริ่มใหญ่สุด แล้วให้ fitGridToScreen หดตามที่ว่างจริง */
     : Math.min(56, Math.max(32, Math.round(250/Math.max(g.cols, g.rows))));
   pad.style.setProperty("--cs", cs+"px");
   pad.style.gridTemplateColumns = "repeat("+g.cols+", "+cs+"px)";
@@ -840,7 +844,7 @@ function fitGridToScreen(){
   if (window.innerWidth <= 820 && window.scrollY < 40){
     var top = pad.parentNode.getBoundingClientRect().top;
     var avail = window.innerHeight - top - acts.offsetHeight - 34;
-    cs = Math.max(26, Math.min(96, Math.floor((avail - 12)/g.rows)));
+    cs = Math.max(26, Math.min(128, Math.floor((avail - 12)/g.rows)));
   }
   var wide = Math.floor((pad.parentNode.clientWidth - 14)/g.cols);
   if (wide > 20) cs = Math.min(cs, wide);
