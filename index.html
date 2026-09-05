@@ -146,6 +146,7 @@ header p{margin:0;color:var(--ink2);font-size:13.5px;max-width:46ch}
 
 .gridwrap{display:flex;justify-content:center;align-items:center;flex:1;padding:6px 0 2px}
 .gridpad{display:grid;gap:0;background:transparent;
+  grid-template-columns:repeat(var(--cols,3), var(--cs,56px));
   border:1.5px dashed var(--line2);padding:5px;
   touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .gridpad .cell{width:var(--cs);height:var(--cs);background:var(--surface);
@@ -250,14 +251,18 @@ footer .ver{display:block;margin-top:4px;font-family:"IBM Plex Mono",monospace;f
   .modes button{padding:6px 13px;font-size:13.5px}
 
   /* รูปทรงอยู่บน ตารางอยู่ล่าง — ต้องเห็นครบในหน้าจอเดียว */
-  .bench{grid-template-columns:1fr;gap:10px}
+  .bench{display:flex;flex-direction:column;gap:10px;
+    height:calc(100vh - 24px);height:calc(100dvh - 24px)}
+  .bench > section:first-of-type{flex:0 0 auto}
+  .bench > section:last-of-type{flex:1 1 auto;min-height:0}
+  .bench > section:last-of-type > .body{height:100%;min-height:0}
   .gutter{display:none}
   .panel > .head{display:none}
   .panel{border:0;background:transparent;box-shadow:none}
   .panel .body{padding:0;gap:6px}
 
   /* กล่องใหญ่ขึ้น ชื่อโจทย์ย้ายมาลอยบนเวที */
-  .stage{aspect-ratio:auto;height:clamp(190px,32vh,310px);height:clamp(190px,32dvh,310px)}
+  .stage{aspect-ratio:auto;height:clamp(170px,30vh,290px);height:clamp(170px,30dvh,290px)}
   .stage .hint{display:none}
   .stage .pzchip{display:block}
 
@@ -270,7 +275,12 @@ footer .ver{display:block;margin-top:4px;font-family:"IBM Plex Mono",monospace;f
   .palette{flex:1;justify-content:flex-end;gap:6px}
   .palette .pl{display:none}
 
-  .gridwrap{padding:0}
+  .gridwrap{flex:1 1 auto;min-height:130px;padding:0}
+  .gridpad{padding:0;height:100%;max-width:100%;
+    aspect-ratio:var(--cols)/var(--rows);
+    grid-template-columns:repeat(var(--cols),1fr);
+    grid-template-rows:repeat(var(--rows),1fr)}
+  .gridpad .cell{width:auto;height:auto;min-width:0;min-height:0}
   .axis{display:none}
   .verdict{min-height:0}
   .verdict:empty{display:none}
@@ -424,7 +434,7 @@ footer .ver{display:block;margin-top:4px;font-family:"IBM Plex Mono",monospace;f
   </section>
 
   <footer>สื่อฝึกมองภาพสามมิติ — ลากรูปทรงเพื่อหมุนดูได้ทุกด้าน กดปุ่ม <b>มุมเฉียง</b> เพื่อคืนตำแหน่งเดิม
-    <span class="ver">รุ่น A6 · จอกว้าง <b id="vwOut">–</b> px · <b id="layoutOut">–</b></span>
+    <span class="ver">รุ่น A8 · จอกว้าง <b id="vwOut">–</b> px · <b id="layoutOut">–</b></span>
   </footer>
 </div>
 
@@ -479,6 +489,15 @@ function projectSet(p, view){
     if (!(kk in out) || dep < depth[kk]){ out[kk] = col; depth[kk] = dep; }
   });
   return out;
+}
+/* ตารางกระดาษใช้ขนาดเดียวกันทุกด้าน: เอาด้านที่ใหญ่สุดมาเผื่อขอบอีกด้านละ 1 */
+function gridBox(p){
+  return {cols: Math.max(p.w, p.d) + 2, rows: Math.max(p.h, p.d) + 2};
+}
+/* วางภาพด้านนั้นไว้กลางตาราง */
+function boxOffset(p, view){
+  var g = gridSpec(p, view), b = gridBox(p);
+  return {dr: Math.floor((b.rows - g.rows)/2), dc: Math.floor((b.cols - g.cols)/2), g:g, b:b};
 }
 /* what runs along the paper, said in words */
 var AXIS_WORD = {
@@ -809,15 +828,16 @@ function restyleAll(){
   Array.prototype.forEach.call($("#grid").children, styleCell);
 }
 function renderGrid(){
-  var p = S.pz, g = gridSpec(p, p.ask), pad = $("#grid");
+  var p = S.pz, g = gridSpec(p, p.ask), b = gridBox(p), pad = $("#grid");
   var cs = window.innerWidth <= 820
     ? 128                                   /* เริ่มใหญ่สุด แล้วให้ fitGridToScreen หดตามที่ว่างจริง */
-    : Math.min(56, Math.max(32, Math.round(250/Math.max(g.cols, g.rows))));
+    : Math.min(56, Math.max(30, Math.round(300/Math.max(b.cols, b.rows))));
   pad.style.setProperty("--cs", cs+"px");
-  pad.style.gridTemplateColumns = "repeat("+g.cols+", "+cs+"px)";
+  pad.style.setProperty("--cols", b.cols);
+  pad.style.setProperty("--rows", b.rows);
   pad.innerHTML = "";
-  for (var r=0; r<g.rows; r++){
-    for (var c=0; c<g.cols; c++){
+  for (var r=0; r<b.rows; r++){
+    for (var c=0; c<b.cols; c++){
       var btn = document.createElement("button");
       btn.type = "button"; btn.dataset.k = r+","+c;
       styleCell(btn);
@@ -825,8 +845,9 @@ function renderGrid(){
     }
   }
   var across = AXIS_WORD[g.ca.i+","+g.ca.s], down = AXIS_WORD[g.ua.i+","+(-g.ua.s)];
-  $("#axisHint").innerHTML = "<span>แนวนอน: <b>"+across+"</b></span><span>·</span><span>แนวตั้ง: <b>"+down+"</b></span>";
-  $("#rightMeta").textContent = g.cols+" × "+g.rows+" ช่อง";
+  $("#axisHint").innerHTML = "<span>แนวนอน: <b>"+across+"</b></span><span>·</span><span>แนวตั้ง: <b>"+down+"</b></span>"
+    + "<span>·</span><span>ระบายตรงไหนของตารางก็ได้</span>";
+  $("#rightMeta").textContent = b.cols+" × "+b.rows+" ช่อง";
   refreshPlayPalette();
   fitGridToScreen();
 }
@@ -836,22 +857,16 @@ function refreshPlayPalette(){
   });
 }
 /* บนมือถือ: หดช่องตารางให้รูปทรงกับตารางอยู่ในหน้าจอเดียวโดยไม่ต้องเลื่อน */
+/* บนมือถือ CSS จัดขนาดตารางเองทั้งหมด (ยืดเต็มที่ว่างและคำนวณใหม่ตลอดเวลา)
+   เหลือแค่จอกว้างที่ต้องกันตารางล้นออกนอกแผง */
 function fitGridToScreen(){
-  var pad = $("#grid"), acts = $("#playBody .actions");
-  if (!pad.children.length || !acts) return;
+  var pad = $("#grid");
+  if (!pad.children.length || window.innerWidth <= 820) return;
   var cur = parseInt(pad.style.getPropertyValue("--cs"), 10) || 56;
-  var g = gridSpec(S.pz, S.pz.ask), cs = cur;
-  if (window.innerWidth <= 820 && window.scrollY < 40){
-    var top = pad.parentNode.getBoundingClientRect().top;
-    var avail = window.innerHeight - top - acts.offsetHeight - 34;
-    cs = Math.max(26, Math.min(128, Math.floor((avail - 12)/g.rows)));
-  }
-  var wide = Math.floor((pad.parentNode.clientWidth - 14)/g.cols);
-  if (wide > 20) cs = Math.min(cs, wide);
-  if (cs !== cur){
-    pad.style.setProperty("--cs", cs+"px");
-    pad.style.gridTemplateColumns = "repeat("+g.cols+", "+cs+"px)";
-  }
+  var b = gridBox(S.pz);
+  var wide = Math.floor((pad.parentNode.clientWidth - 16)/b.cols);
+  var cs = wide > 18 ? Math.min(cur, wide) : cur;
+  if (cs !== cur) pad.style.setProperty("--cs", cs+"px");
 }
 var paintMode; // colour id, or null for erase
 function cellAt(x,y){
@@ -888,32 +903,59 @@ function setVerdict(text, cls){
   var v = $("#verdict"); v.textContent = text; v.className = "verdict" + (cls ? " "+cls : "");
 }
 function checkAnswer(){
-  var p = S.pz, correct = projectSet(p, p.ask), g = gridSpec(p, p.ask);
-  var marks = {}, extra = 0, missing = 0, wrong = 0, hit = 0;
-  var need = Object.keys(correct).length;
-  for (var r=0; r<g.rows; r++) for (var c=0; c<g.cols; c++){
-    var k = r+","+c, a = S.ans[k] || null, w = correct[k] || null;
-    if (a && w && a === w){ marks[k] = "ok"; hit++; }
-    else if (a && w){ marks[k] = "badcolor"; wrong++; }
-    else if (a && !w){ marks[k] = "extra"; extra++; }
-    else if (!a && w){ marks[k] = "gap"; missing++; }
+  var p = S.pz, view = p.ask;
+  var pat = projectSet(p, view), o = boxOffset(p, view), g = o.g, b = o.b;
+  var keys = Object.keys(pat), ansKeys = Object.keys(S.ans);
+  if (!ansKeys.length){
+    setVerdict("ยังไม่ได้ระบายสักช่อง ลองดูรูปทรงทางซ้ายแล้วระบายดูครับ", "note");
+    return;
   }
+  /* ระบายไว้ตรงไหนของตารางก็ได้ — หาตำแหน่งที่ตรงกับคำตอบมากที่สุดก่อนตรวจ */
+  var best = {score:-1e9, dr:o.dr, dc:o.dc};
+  for (var dr=0; dr <= b.rows-g.rows; dr++){
+    for (var dc=0; dc <= b.cols-g.cols; dc++){
+      var sc = 0, used = 0;
+      for (var i=0; i<keys.length; i++){
+        var a = keys[i].split(",");
+        var mine = S.ans[(+a[0]+dr)+","+(+a[1]+dc)];
+        if (mine === pat[keys[i]]){ sc += 3; used++; }
+        else if (mine){ used++; }
+        else sc -= 1;
+      }
+      sc -= (ansKeys.length - used);
+      if (sc > best.score) best = {score:sc, dr:dr, dc:dc};
+    }
+  }
+  var marks = {}, covered = {}, hit = 0, wrong = 0, missing = 0, extra = 0;
+  keys.forEach(function(k){
+    var a = k.split(",");
+    var kk = (+a[0]+best.dr)+","+(+a[1]+best.dc);
+    covered[kk] = 1;
+    var mine = S.ans[kk];
+    if (mine === pat[k]){ marks[kk] = "ok"; hit++; }
+    else if (mine){ marks[kk] = "badcolor"; wrong++; }
+    else { marks[kk] = "gap"; missing++; }
+  });
+  ansKeys.forEach(function(k){ if (!covered[k]){ marks[k] = "extra"; extra++; } });
   S.marks = marks; S.revealed = false;
   restyleAll();
   if (!extra && !missing && !wrong){
-    setVerdict("ถูกทั้งหมด " + need + " ช่อง — เก่งมาก!", "good");
+    setVerdict("ถูกทั้งหมด " + keys.length + " ช่อง — เก่งมาก!", "good");
   } else {
     var msg = [];
     if (missing) msg.push("ยังขาด " + missing + " ช่อง");
     if (wrong) msg.push("สีผิด " + wrong + " ช่อง");
     if (extra) msg.push("ระบายเกิน " + extra + " ช่อง");
-    setVerdict("ถูก " + hit + " จาก " + need + " ช่อง · " + msg.join(" · "), "bad");
+    setVerdict("ถูก " + hit + " จาก " + keys.length + " ช่อง · " + msg.join(" · "), "bad");
   }
 }
 function revealAnswer(){
-  var p = S.pz;
-  S.ans = projectSet(p, p.ask);
-  S.marks = null; S.revealed = true;
+  var p = S.pz, o = boxOffset(p, p.ask), pat = projectSet(p, p.ask), out = {};
+  Object.keys(pat).forEach(function(k){
+    var a = k.split(",");
+    out[(+a[0]+o.dr)+","+(+a[1]+o.dc)] = pat[k];
+  });
+  S.ans = out; S.marks = null; S.revealed = true;
   restyleAll();
   goView(p.ask);
   setVerdict("นี่คือเฉลย — รูปทรงหมุนไปอยู่ที่" + VIEWS[p.ask].label + "แล้ว ลองเทียบสีทีละช่องดู", "note");
