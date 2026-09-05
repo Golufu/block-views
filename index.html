@@ -1,0 +1,1163 @@
+<title>มองบล็อกหกด้าน</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root{
+  --paper:#EDEFEA; --surface:#F8F9F6; --surface2:#E3E8E1; --sunk:#E6EAE4;
+  --ink:#14202B; --ink2:#4D5F68; --ink3:#7C8D93;
+  --line:#C6CFC9; --line2:#ABB8B1;
+  --accent:#C06810; --accent-soft:#F6E3CC; --accent-line:#E0B481;
+  --good:#2F7C4C; --good-soft:#D8ECDE;
+  --miss:#B23A31; --miss-soft:#F5DDDA;
+  --focus:#1D6E80;
+  --shadow:0 1px 0 rgba(20,32,43,.05), 0 10px 24px -18px rgba(20,32,43,.55);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#101920; --surface:#18242C; --surface2:#24333C; --sunk:#131E25;
+    --ink:#E9EFEB; --ink2:#A2B2B9; --ink3:#7E9098;
+    --line:#31444E; --line2:#40575F;
+    --accent:#E9A250; --accent-soft:#39291A; --accent-line:#6B4E2C;
+    --good:#63B586; --good-soft:#1C3428;
+    --miss:#E07469; --miss-soft:#3B221F;
+    --focus:#82C9D8;
+    --shadow:0 1px 0 rgba(0,0,0,.25), 0 10px 24px -18px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#101920; --surface:#18242C; --surface2:#24333C; --sunk:#131E25;
+  --ink:#E9EFEB; --ink2:#A2B2B9; --ink3:#7E9098;
+  --line:#31444E; --line2:#40575F;
+  --accent:#E9A250; --accent-soft:#39291A; --accent-line:#6B4E2C;
+  --good:#63B586; --good-soft:#1C3428;
+  --miss:#E07469; --miss-soft:#3B221F;
+  --focus:#82C9D8;
+  --shadow:0 1px 0 rgba(0,0,0,.25), 0 10px 24px -18px rgba(0,0,0,.9);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans Thai","Helvetica Neue",Arial,sans-serif;
+  font-size:15px; line-height:1.6;
+  padding:22px 20px 40px;
+}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3,.mitr{font-family:Mitr,"IBM Plex Sans Thai",sans-serif;font-weight:500;letter-spacing:0}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2.5px solid var(--focus);outline-offset:2px;border-radius:3px}
+.num{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+
+/* ---------- header ---------- */
+header{display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px 24px;
+  border-bottom:2px solid var(--ink);padding-bottom:12px}
+header .brand{display:flex;align-items:baseline;gap:12px;flex:1 1 auto}
+h1{font-size:26px;line-height:1.25;margin:0;font-weight:600}
+header p{margin:0;color:var(--ink2);font-size:13.5px;max-width:46ch}
+.modes{display:flex;gap:0;border:1.5px solid var(--ink);border-radius:2px;overflow:hidden;flex:0 0 auto}
+.modes button{background:transparent;border:0;padding:8px 18px;cursor:pointer;
+  font-family:Mitr,sans-serif;font-size:14.5px;color:var(--ink2)}
+.modes button+button{border-left:1.5px solid var(--ink)}
+.modes button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+
+/* ---------- workbench ---------- */
+.bench{display:grid;grid-template-columns:minmax(0,1.15fr) 74px minmax(0,1fr);gap:0;align-items:stretch}
+.panel{background:var(--surface);border:1.5px solid var(--line);box-shadow:var(--shadow);
+  display:flex;flex-direction:column;min-width:0}
+.panel > .head{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 14px;border-bottom:1.5px solid var(--line);background:var(--surface2)}
+.panel > .head h2{font-size:14px;margin:0;font-weight:500}
+.panel .body{padding:14px;display:flex;flex-direction:column;gap:12px;flex:1}
+.panel .body[hidden]{display:none}
+
+.gutter{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:0 6px}
+.gutter svg{width:38px;height:26px;overflow:visible}
+.gutter .lbl{font-family:Mitr,sans-serif;font-size:11.5px;color:var(--ink3);text-align:center;line-height:1.35}
+
+/* ---------- stage ---------- */
+.stage{position:relative;background:var(--sunk);border:1.5px solid var(--line);
+  aspect-ratio:5/4;touch-action:none;cursor:grab;overflow:hidden;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.stage.dragging{cursor:grabbing}
+.stage canvas{display:block;width:100%;height:100%}
+.stage .facing{position:absolute;left:10px;top:10px;display:flex;align-items:center;gap:7px;
+  font-size:12px;background:color-mix(in srgb,var(--surface) 88%,transparent);
+  border:1px solid var(--line);padding:3px 9px;border-radius:2px}
+.stage .facing b{font-family:Mitr,sans-serif;font-weight:500}
+.stage .facing.on{border-color:var(--accent-line);background:var(--accent-soft);color:var(--accent)}
+.stage .hint{position:absolute;right:10px;bottom:9px;font-size:11.5px;color:var(--ink3)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ink3);flex:0 0 auto}
+.facing.on .dot{background:var(--accent)}
+
+.viewbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.vbtn{background:var(--surface);border:1.5px solid var(--line2);padding:6px 11px;cursor:pointer;
+  font-family:Mitr,sans-serif;font-size:13px;border-radius:2px;color:var(--ink2)}
+.vbtn:hover{border-color:var(--ink2);color:var(--ink)}
+.vbtn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.vbtn.ask{border-color:var(--accent-line);color:var(--accent)}
+.vbtn.ask[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.spacer{flex:1}
+.ghost{background:transparent;border:1.5px dashed var(--line2);padding:6px 11px;cursor:pointer;
+  font-family:Mitr,sans-serif;font-size:13px;border-radius:2px;color:var(--ink2)}
+.ghost:hover{border-style:solid;color:var(--ink)}
+
+/* ---------- answer grid ---------- */
+.askline{display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  background:var(--accent-soft);border:1.5px solid var(--accent-line);padding:8px 12px}
+.askline .q{font-size:13px;color:var(--ink2)}
+.askline .v{font-family:Mitr,sans-serif;font-size:16px;color:var(--accent);font-weight:500}
+.askline select{background:var(--surface);border:1.5px solid var(--accent-line);
+  padding:4px 8px;font-size:13.5px;border-radius:2px}
+
+.palette{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.palette .pl{font-size:12.5px;color:var(--ink2)}
+.sw{display:inline-flex;align-items:center;gap:7px;background:var(--surface);
+  border:1.5px solid var(--line2);padding:4px 11px 4px 5px;border-radius:2px;
+  cursor:pointer;font-size:13px;color:var(--ink2)}
+.sw i{width:18px;height:18px;display:block;border:1.5px solid var(--ink);border-radius:1px}
+.sw:hover{border-color:var(--ink2)}
+.sw[aria-pressed="true"]{border-color:var(--ink);color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.sw.eraser i{background:transparent;border-style:dashed;position:relative}
+.sw.eraser i::after{content:"";position:absolute;left:-1px;right:-1px;top:6px;height:1.5px;
+  background:var(--miss);transform:rotate(-45deg)}
+
+.gridwrap{display:flex;justify-content:center;align-items:center;flex:1;padding:6px 0 2px}
+.gridpad{display:grid;gap:0;background:transparent;
+  border:1.5px dashed var(--line2);padding:5px;
+  touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.gridpad .cell{width:var(--cs);height:var(--cs);background:var(--surface);
+  border:1px dashed var(--line2);cursor:pointer;padding:0;position:relative}
+.gridpad .cell.filled{border:1.5px solid var(--ink)}
+.gridpad .cell:hover{outline:2px solid var(--ink3);outline-offset:-2px}
+.gridpad .cell.ok{box-shadow:inset 0 0 0 3px var(--good)}
+.gridpad .cell.badcolor{box-shadow:inset 0 0 0 3px var(--miss)}
+.gridpad .cell.extra{box-shadow:inset 0 0 0 3px var(--miss)}
+.gridpad .cell.extra::after,.gridpad .cell.extra::before{content:"";position:absolute;
+  left:26%;right:26%;top:calc(50% - 1px);height:2px;background:var(--miss)}
+.gridpad .cell.extra::before{transform:rotate(45deg)}
+.gridpad .cell.extra::after{transform:rotate(-45deg)}
+.gridpad .cell.gap{border:2px dashed var(--miss)}
+.gridpad .cell.reveal{box-shadow:inset 0 0 0 3px var(--accent)}
+.axis{display:flex;gap:8px;justify-content:center;align-items:center;font-size:11.5px;color:var(--ink3)}
+.axis span{display:inline-flex;align-items:center;gap:4px}
+
+.verdict{min-height:22px;font-size:13.5px;display:flex;align-items:center;gap:8px}
+.verdict.good{color:var(--good)}
+.verdict.bad{color:var(--miss)}
+.verdict.note{color:var(--accent)}
+.actions{display:flex;gap:7px;flex-wrap:wrap}
+.solid{background:var(--ink);color:var(--paper);border:1.5px solid var(--ink);
+  padding:8px 16px;cursor:pointer;font-family:Mitr,sans-serif;font-size:14px;border-radius:2px}
+.solid:hover{background:var(--focus);border-color:var(--focus)}
+.solid.amber{background:var(--accent);border-color:var(--accent);color:#fff}
+.solid.amber:hover{filter:brightness(1.08)}
+
+/* ---------- builder ---------- */
+.dims{display:flex;gap:10px;flex-wrap:wrap}
+.dim{display:flex;align-items:center;gap:6px;border:1.5px solid var(--line);padding:4px 6px 4px 10px;background:var(--surface)}
+.dim label{font-size:12.5px;color:var(--ink2)}
+.dim .val{font-size:14px;min-width:14px;text-align:center}
+.step{width:24px;height:24px;border:1.5px solid var(--line2);background:var(--surface);
+  cursor:pointer;line-height:1;padding:0;border-radius:2px;color:var(--ink2)}
+.step:hover{border-color:var(--ink);color:var(--ink)}
+.layers{display:flex;flex-wrap:wrap;gap:12px}
+.layer{border:1.5px solid var(--line);background:var(--surface);padding:8px}
+.layer .cap{font-size:11.5px;color:var(--ink3);margin-bottom:6px;display:flex;justify-content:space-between;gap:10px}
+.layer .cap b{font-family:Mitr,sans-serif;font-weight:500;color:var(--ink2)}
+.layer .plan{display:grid;gap:2px}
+.layer .plan button{width:26px;height:26px;touch-action:manipulation;padding:0;cursor:pointer;border-radius:1px;
+  border:1px solid var(--line2);background:var(--sunk)}
+.layer .plan button[aria-pressed="true"]{border:1.5px solid var(--ink)}
+.layer .plan button.under{background:repeating-linear-gradient(45deg,transparent,transparent 3px,var(--line) 3px,var(--line) 4px)}
+.field{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.field label{font-size:12.5px;color:var(--ink2)}
+.field input[type=text],.field select{background:var(--surface);border:1.5px solid var(--line2);
+  padding:6px 9px;border-radius:2px;font-size:13.5px}
+.field input[type=text]{min-width:150px;flex:1}
+.legend{font-size:12px;color:var(--ink3);border-left:2px solid var(--line2);padding-left:9px}
+
+/* ---------- library ---------- */
+.shelf{display:flex;flex-direction:column;gap:12px}
+.shelf .top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.shelf h2{font-size:15px;margin:0}
+.shelf .top span{font-size:12.5px;color:var(--ink3)}
+.shelfbody{display:flex;flex-direction:column;gap:18px}
+.group{display:flex;flex-direction:column;gap:8px}
+.group h3{font-size:12.5px;font-weight:500;color:var(--ink3);margin:0;
+  display:flex;align-items:center;gap:10px;font-family:Mitr,sans-serif}
+.group h3::after{content:"";flex:1;height:1px;background:var(--line)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:10px}
+.card{position:relative;text-align:left;background:var(--surface);border:1.5px solid var(--line);
+  padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;gap:2px;border-radius:2px}
+.card:hover{border-color:var(--ink2)}
+.card[aria-current="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.card .nm{font-family:Mitr,sans-serif;font-size:14px}
+.card .meta{font-size:11.5px;color:var(--ink3)}
+.card .chips{display:flex;gap:3px;margin:3px 0 1px}
+.card .chips i{width:12px;height:12px;display:block;border:1px solid var(--ink);border-radius:1px}
+.card .tag{font-size:11px;color:var(--accent);border:1px solid var(--accent-line);
+  background:var(--accent-soft);padding:0 6px;border-radius:2px;align-self:flex-start;margin-top:2px}
+.card .del{position:absolute;top:4px;right:4px;width:22px;height:22px;border:0;background:transparent;
+  color:var(--ink3);cursor:pointer;font-size:14px;line-height:1;border-radius:2px;
+  display:flex;align-items:center;justify-content:center}
+.card .del:hover{background:var(--miss-soft);color:var(--miss)}
+.card .del.arm{background:var(--miss);color:#fff}
+
+.codebar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+  border-top:1.5px dashed var(--line2);padding-top:12px}
+.codebar label{font-size:12.5px;color:var(--ink2)}
+.codebar input{flex:1;min-width:170px;background:var(--sunk);border:1.5px solid var(--line2);
+  padding:6px 9px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;border-radius:2px}
+.mini{background:transparent;border:1.5px solid var(--line2);padding:6px 12px;cursor:pointer;
+  font-size:13px;border-radius:2px;color:var(--ink2);font-family:Mitr,sans-serif}
+.mini:hover{border-color:var(--ink);color:var(--ink)}
+footer{font-size:12px;color:var(--ink3);border-top:1px solid var(--line);padding-top:10px}
+
+@media (max-width:820px){
+  body{padding:16px 13px 32px}
+  .bench{grid-template-columns:1fr;gap:0}
+  .gutter{flex-direction:row;padding:10px 0}
+  .gutter svg{transform:rotate(90deg)}
+  h1{font-size:22px}
+  header{align-items:flex-start}
+  header .brand{flex-direction:column;gap:2px}
+  .palette .pl{flex-basis:100%}
+  .stage{aspect-ratio:1/1}
+  .vbtn,.ghost{padding:9px 13px}
+  .solid,.mini{padding:10px 16px}
+  .sw{padding:7px 12px 7px 7px}
+  .layer .plan button{width:32px;height:32px}
+  .stage .hint{display:none}
+  .cards{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>มองบล็อกหกด้าน</h1>
+      <p>ดูรูปทรงที่ประกอบจากลูกบาศก์สีขาว เทา ดำ แล้วระบายช่องให้ตรงกับภาพที่มองจากด้านนั้น</p>
+    </div>
+    <div class="modes" role="group" aria-label="โหมดการใช้งาน">
+      <button data-mode="play" aria-pressed="true">เล่นโจทย์</button>
+      <button data-mode="build" aria-pressed="false">สร้างโจทย์</button>
+    </div>
+  </header>
+
+  <div class="bench">
+    <section class="panel">
+      <div class="head">
+        <h2 id="pzName">รูปทรง</h2>
+        <span class="num" id="pzMeta"></span>
+      </div>
+      <div class="body">
+        <div class="stage" id="stage">
+          <canvas id="cv"></canvas>
+          <div class="facing" id="facing"><span class="dot"></span><span>กำลังมอง <b>มุมเฉียง</b></span></div>
+          <div class="hint">ลากเพื่อหมุน · ล้อเมาส์หรือสองนิ้วเพื่อย่อ–ขยาย</div>
+        </div>
+        <div class="viewbar" id="viewbar"></div>
+      </div>
+    </section>
+
+    <div class="gutter" aria-hidden="true">
+      <svg viewBox="0 0 40 26" fill="none">
+        <path d="M0 13h27" stroke="currentColor" stroke-width="5" style="color:var(--ink2)"/>
+        <path d="M25 3l13 10-13 10z" fill="currentColor" style="color:var(--ink2)"/>
+      </svg>
+      <span class="lbl">มองแล้ว<br>ระบาย</span>
+    </div>
+
+    <section class="panel">
+      <div class="head">
+        <h2 id="rightTitle">ตารางคำตอบ</h2>
+        <span class="num" id="rightMeta"></span>
+      </div>
+
+      <div class="body" id="playBody">
+        <div class="askline">
+          <span class="q">โจทย์ถาม</span>
+          <span class="v" id="askName">ด้านหน้า</span>
+          <span class="spacer"></span>
+          <label class="q" for="askSel">เปลี่ยนเป็น</label>
+          <select id="askSel" aria-label="เลือกด้านที่จะตอบ"></select>
+        </div>
+        <div class="palette" id="palPlay" role="group" aria-label="เลือกสีที่จะระบาย">
+          <span class="pl">ระบายด้วยสี</span>
+        </div>
+        <div class="gridwrap"><div class="gridpad" id="grid"></div></div>
+        <div class="axis" id="axisHint"></div>
+        <div class="verdict" id="verdict"></div>
+        <div class="actions">
+          <button class="solid" id="btnCheck">ตรวจคำตอบ</button>
+          <button class="ghost" id="btnClear">ล้างช่อง</button>
+          <span class="spacer"></span>
+          <button class="solid amber" id="btnReveal">หมุนดูเฉลย</button>
+        </div>
+      </div>
+
+      <div class="body" id="buildBody" hidden>
+        <div class="dims" id="dims"></div>
+        <div class="palette" id="palBuild" role="group" aria-label="เลือกสีบล็อก">
+          <span class="pl">สีบล็อกที่จะวาง</span>
+        </div>
+        <div class="legend">ผังแต่ละชั้นมองจากด้านบน · แถวบนสุดคือด้านหลัง แถวล่างสุดคือด้านหน้า · แตะซ้ำที่สีเดิมเพื่อเอาบล็อกออก</div>
+        <div class="layers" id="layers"></div>
+        <div class="field">
+          <label for="nmIn">ชื่อโจทย์</label>
+          <input type="text" id="nmIn" maxlength="28" placeholder="เช่น บันไดสามขั้น">
+          <label for="askSel2">ถามด้าน</label>
+          <select id="askSel2"></select>
+        </div>
+        <div class="verdict" id="buildMsg"></div>
+        <div class="actions">
+          <button class="solid" id="btnUse">ใช้เป็นโจทย์</button>
+          <button class="ghost" id="btnSave">บันทึกลงคลัง</button>
+          <button class="ghost" id="btnRand">สุ่มรูปทรง</button>
+          <button class="ghost" id="btnEmpty">ล้างบล็อก</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="shelf">
+    <div class="top">
+      <h2>คลังโจทย์</h2>
+      <span id="shelfNote">แตะการ์ดเพื่อเปลี่ยนรูปทรง</span>
+    </div>
+    <div class="shelfbody" id="shelfBody"></div>
+    <div class="codebar">
+      <label for="codeOut">รหัสโจทย์นี้</label>
+      <input id="codeOut" readonly spellcheck="false">
+      <button class="mini" id="btnCopy">คัดลอก</button>
+      <label for="codeIn">เปิดจากรหัส</label>
+      <input id="codeIn" spellcheck="false" placeholder="วางรหัสที่ครูให้มา">
+      <button class="mini" id="btnLoad">เปิด</button>
+    </div>
+  </section>
+
+  <footer>สื่อฝึกมองภาพสามมิติ — ลากรูปทรงเพื่อหมุนดูได้ทุกด้าน กดปุ่ม <b>มุมเฉียง</b> เพื่อคืนตำแหน่งเดิม</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+var $ = function(s){ return document.querySelector(s); };
+var RAD = Math.PI/180;
+
+/* ---------- views: yaw about z, pitch above horizon ---------- */
+var VIEWS = {
+  front : {label:"ด้านหน้า", yaw:0,   pitch:0,   key:"F"},
+  back  : {label:"ด้านหลัง", yaw:180, pitch:0,   key:"K"},
+  left  : {label:"ด้านซ้าย", yaw:90,  pitch:0,   key:"L"},
+  right : {label:"ด้านขวา",  yaw:270, pitch:0,   key:"R"},
+  top   : {label:"ด้านบน",   yaw:0,   pitch:90,  key:"T"},
+  bottom: {label:"ด้านล่าง", yaw:0,   pitch:-90, key:"B"}
+};
+var VIEW_ORDER = ["front","back","left","right","top","bottom"];
+var ISO = {yaw:-28, pitch:26};
+
+function frame(yaw, pitch){
+  var a = yaw*RAD, b = pitch*RAD;
+  var ca = Math.cos(a), sa = Math.sin(a), cb = Math.cos(b), sb = Math.sin(b);
+  var d = [sa*cb, ca*cb, -sb];           // camera -> scene
+  var u = [sa*sb, ca*sb, cb];            // screen up (orthogonal to d)
+  var r = [d[1]*u[2]-d[2]*u[1], d[2]*u[0]-d[0]*u[2], d[0]*u[1]-d[1]*u[0]];
+  return {d:d, u:u, r:r};
+}
+function axisOf(v){
+  var i = 0, m = Math.abs(v[0]);
+  for (var k=1;k<3;k++){ if (Math.abs(v[k])>m){ m=Math.abs(v[k]); i=k; } }
+  return {i:i, s: v[i] >= 0 ? 1 : -1};
+}
+function key(x,y,z){ return x+","+y+","+z; }
+
+/* grid footprint of a view: which lattice axis runs across / down the paper */
+function gridSpec(p, view){
+  var f = frame(VIEWS[view].yaw, VIEWS[view].pitch);
+  var ca = axisOf(f.r), ua = axisOf(f.u), da = axisOf(f.d);
+  var dims = [p.w, p.d, p.h];
+  return {cols: dims[ca.i], rows: dims[ua.i], ca: ca, ua: ua, da: da, dims: dims};
+}
+/* each paper square takes the colour of the nearest block on that line of sight */
+function projectSet(p, view){
+  var g = gridSpec(p, view), out = {}, depth = {};
+  p.cells.forEach(function(col, k){
+    var c = k.split(",").map(Number);
+    var cc = g.ca.s > 0 ? c[g.ca.i] : g.dims[g.ca.i]-1-c[g.ca.i];
+    var rr = g.ua.s > 0 ? g.dims[g.ua.i]-1-c[g.ua.i] : c[g.ua.i];
+    var kk = rr+","+cc, dep = g.da.s > 0 ? c[g.da.i] : -c[g.da.i];
+    if (!(kk in out) || dep < depth[kk]){ out[kk] = col; depth[kk] = dep; }
+  });
+  return out;
+}
+/* what runs along the paper, said in words */
+var AXIS_WORD = {
+  "0,1":"ซ้าย → ขวา", "0,-1":"ขวา → ซ้าย",
+  "1,1":"หน้า → หลัง", "1,-1":"หลัง → หน้า",
+  "2,1":"ล่าง → บน",  "2,-1":"บน → ล่าง"
+};
+
+/* ---------- block colours ---------- */
+var COLORS = {
+  w: {label:"ขาว", flat:"#F1F2EE", base:[224,228,222], dark:[138,147,145], light:[255,255,255]},
+  g: {label:"เทา", flat:"#96A0A2", base:[150,160,162], dark:[ 86, 96,100], light:[202,209,209]},
+  k: {label:"ดำ",  flat:"#232B31", base:[ 30, 37, 43], dark:[  8, 11, 14], light:[ 74, 82, 89]}
+};
+var COLOR_ORDER = ["w","g","k"];
+function colorOf(c){ return COLORS[c] ? c : "k"; }
+
+/* ---------- starter shapes ---------- */
+function mk(name, lvl, w, d, h, cells, ask){
+  var m = new Map();
+  cells.forEach(function(c){ m.set(key(c[0],c[1],c[2]), colorOf(c[3])); });
+  return {name:name, lvl:lvl, w:w, d:d, h:h, cells:m, ask:ask, starter:true};
+}
+function slab(w, d, z, col){
+  var out = [];
+  for (var y=0; y<d; y++) for (var x=0; x<w; x++) out.push([x,y,z,col]);
+  return out;
+}
+var STARTERS = [
+  mk("บันไดสามขั้น",1,3,1,3,[[0,0,0,"k"],[1,0,0,"k"],[2,0,0,"k"],[1,0,1,"k"],[2,0,1,"k"],[2,0,2,"k"]],"front"),
+  mk("ธงสามสี",1,3,1,2,[[0,0,0,"w"],[1,0,0,"g"],[2,0,0,"k"],[0,0,1,"w"],[1,0,1,"g"],[2,0,1,"k"]],"front"),
+  mk("กล่องซ้อน",1,2,2,2,slab(2,2,0,"k").concat(slab(2,2,1,"w")),"right"),
+  mk("สะพาน",1,3,1,2,[[0,0,0,"k"],[2,0,0,"k"],[0,0,1,"w"],[1,0,1,"g"],[2,0,1,"w"]],"front"),
+  mk("เสาธง",1,3,1,3,[[0,0,0,"g"],[1,0,0,"g"],[2,0,0,"g"],[1,0,1,"k"],[1,0,2,"k"]],"front"),
+  mk("มุมตัวแอล",1,2,2,2,[[0,0,0,"k"],[1,0,0,"w"],[0,1,0,"g"],[0,0,1,"w"]],"top"),
+
+  mk("เก้าอี้",2,2,2,3,[[0,0,0,"g"],[1,0,0,"g"],[0,1,0,"g"],[1,1,0,"g"],
+      [0,1,1,"k"],[1,1,1,"k"],[0,1,2,"k"],[1,1,2,"k"]],"right"),
+  mk("ภูเขาเล็ก",2,3,3,2,slab(3,3,0,"g").concat([[1,1,1,"w"]]),"back"),
+  mk("หอคอยบิด",2,2,2,3,slab(2,2,0,"w").concat([[1,0,1,"g"],[1,1,1,"g"],[1,1,2,"k"]]),"left"),
+  mk("ตึกสามชั้น",2,2,2,3,slab(2,2,0,"k").concat(slab(2,2,1,"g")).concat([[0,0,2,"w"],[0,1,2,"w"]]),"front"),
+  mk("รางรถไฟ",2,4,1,2,[[0,0,0,"g"],[1,0,0,"g"],[2,0,0,"g"],[3,0,0,"g"],[0,0,1,"k"],[3,0,1,"k"]],"front"),
+  mk("โซฟา",2,3,2,2,slab(3,2,0,"w").concat([[0,1,1,"k"],[1,1,1,"k"],[2,1,1,"k"]]),"front"),
+  mk("กำแพงสองสี",2,4,1,3,[[0,0,0,"k"],[1,0,0,"w"],[2,0,0,"k"],[3,0,0,"w"],
+      [0,0,1,"w"],[1,0,1,"k"],[2,0,1,"w"],[3,0,1,"k"],[1,0,2,"g"],[2,0,2,"g"]],"front"),
+
+  mk("บันไดหักมุม",3,3,3,2,[[0,0,0,"g"],[1,0,0,"g"],[2,0,0,"g"],[2,1,0,"g"],[2,2,0,"g"],
+      [2,1,1,"k"],[2,2,1,"k"]],"right"),
+  mk("ปราสาทน้อย",3,3,3,3,slab(3,3,0,"g").concat([[0,0,1,"w"],[2,0,1,"w"],[0,2,1,"w"],[2,2,1,"w"],
+      [0,0,2,"k"],[2,2,2,"k"]]),"front"),
+  mk("ก้อนที่ซ่อนอยู่",3,3,3,2,[[0,0,0,"w"],[1,0,0,"w"],[2,0,0,"w"],[1,1,0,"w"],[1,2,0,"w"],
+      [1,1,1,"k"]],"front"),
+  mk("ลานสามระดับ",3,3,3,3,slab(3,3,0,"w").concat([[0,0,1,"g"],[1,0,1,"g"],[0,1,1,"g"],[1,1,1,"g"],
+      [0,0,2,"k"]]),"left"),
+  mk("ประตูโค้ง",3,3,1,3,[[0,0,0,"k"],[2,0,0,"k"],[0,0,1,"k"],[2,0,1,"k"],
+      [0,0,2,"g"],[1,0,2,"g"],[2,0,2,"g"]],"front")
+];
+var LEVELS = {1:"ระดับ 1 · เริ่มต้น", 2:"ระดับ 2 · ปานกลาง", 3:"ระดับ 3 · ท้าทาย"};
+function clonePz(p){
+  return {name:p.name, lvl:p.lvl, w:p.w, d:p.d, h:p.h, cells:new Map(p.cells),
+          ask:p.ask, id:p.id, starter:p.starter};
+}
+
+/* ---------- state ---------- */
+var S = {
+  mode:"play",
+  pz: clonePz(STARTERS[0]),
+  build: null,
+  yaw: ISO.yaw, pitch: ISO.pitch, zoom: 1,
+  ans: {}, marks: null, revealed: false,
+  saved: [], armed: null,
+  paintColor: "k", brush: "k"
+};
+S.pz.id = "s0";
+
+/* ---------- canvas ---------- */
+var cv = $("#cv"), ctx = cv.getContext("2d"), stage = $("#stage");
+var PAL = {};
+function css(n){ return getComputedStyle(document.body).getPropertyValue(n).trim(); }
+function hex2rgb(h){
+  h = h.replace("#","");
+  if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  var n = parseInt(h,16);
+  return [(n>>16)&255, (n>>8)&255, n&255];
+}
+function mix(a,b,t){ return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t]; }
+function rgb(c,a){
+  var s = Math.round(c[0])+","+Math.round(c[1])+","+Math.round(c[2]);
+  return a === undefined ? "rgb("+s+")" : "rgba("+s+","+a+")";
+}
+function refreshPalette(){
+  PAL.ink = hex2rgb(css("--ink") || "#14202B");
+  PAL.line = hex2rgb(css("--line2") || "#ABB8B1");
+  PAL.sunk = css("--sunk") || "#E6EAE4";
+}
+var EDGE_DARK = [22,30,37], EDGE_LIGHT = [223,231,234];
+var LIGHT = (function(){
+  var v = [-0.35,-0.55,1.0], m = Math.hypot(v[0],v[1],v[2]);
+  return [v[0]/m, v[1]/m, v[2]/m];
+})();
+function lum(c){ return (0.299*c[0] + 0.587*c[1] + 0.114*c[2])/255; }
+/* face colour of one block: its own three tones, lit from a fixed world light */
+function faceColor(cid, n){
+  var C = COLORS[cid] || COLORS.k;
+  var t = 0.15 + 0.85*(0.5 + 0.5*(n[0]*LIGHT[0] + n[1]*LIGHT[1] + n[2]*LIGHT[2]));
+  return t < 0.5 ? mix(C.dark, C.base, t*2) : mix(C.base, C.light, (t-0.5)*2);
+}
+var FACES = [
+  {n:[0,0,1],  v:[[0,0,1],[1,0,1],[1,1,1],[0,1,1]]},
+  {n:[0,0,-1], v:[[0,1,0],[1,1,0],[1,0,0],[0,0,0]]},
+  {n:[1,0,0],  v:[[1,0,0],[1,1,0],[1,1,1],[1,0,1]]},
+  {n:[-1,0,0], v:[[0,0,0],[0,0,1],[0,1,1],[0,1,0]]},
+  {n:[0,1,0],  v:[[0,1,0],[0,1,1],[1,1,1],[1,1,0]]},
+  {n:[0,-1,0], v:[[0,0,0],[1,0,0],[1,0,1],[0,0,1]]}
+];
+function dpr(){ return Math.min(window.devicePixelRatio || 1, 2); }
+function fit(){
+  var r = stage.getBoundingClientRect(), k = dpr();
+  cv.width = Math.max(1, Math.round(r.width*k));
+  cv.height = Math.max(1, Math.round(r.height*k));
+  ctx.setTransform(k,0,0,k,0,0);
+  draw();
+}
+function currentPz(){ return S.mode === "build" ? S.build : S.pz; }
+
+function draw(){
+  var p = currentPz(), k = dpr();
+  var W = cv.width/k, H = cv.height/k;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = PAL.sunk; ctx.fillRect(0,0,W,H);
+  var f = frame(S.yaw, S.pitch), d = f.d, u = f.u, r = f.r;
+  var rad = 0.5*Math.hypot(p.w,p.d,p.h);
+  var sc = Math.min(W,H)/(2*rad*1.2)*S.zoom;
+  var cx = W/2, cy = H/2;
+  function proj(x,y,z){
+    return [ (x*r[0]+y*r[1]+z*r[2])*sc + cx, -(x*u[0]+y*u[1]+z*u[2])*sc + cy ];
+  }
+  var ox = (p.w-1)/2, oy = (p.d-1)/2, oz = (p.h-1)/2;
+
+  /* floor plate */
+  var z0 = -oz-0.5;
+  ctx.strokeStyle = rgb(PAL.line,0.75); ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (var i=0;i<=p.w;i++){
+    var a = proj(i-ox-0.5, -oy-0.5, z0), b = proj(i-ox-0.5, p.d-oy-0.5, z0);
+    ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]);
+  }
+  for (var j=0;j<=p.d;j++){
+    var c1 = proj(-ox-0.5, j-oy-0.5, z0), e = proj(p.w-ox-0.5, j-oy-0.5, z0);
+    ctx.moveTo(c1[0],c1[1]); ctx.lineTo(e[0],e[1]);
+  }
+  ctx.stroke();
+
+  /* blocks, far to near */
+  var list = [];
+  p.cells.forEach(function(col, kk){
+    var c = kk.split(",").map(Number);
+    var px = c[0]-ox, py = c[1]-oy, pz = c[2]-oz;
+    list.push({c:c, col:col, p:[px,py,pz], z: px*d[0]+py*d[1]+pz*d[2]});
+  });
+  list.sort(function(a,b){ return b.z - a.z; });
+  ctx.lineWidth = Math.max(1, sc*0.022);
+  ctx.lineJoin = "round";
+  for (var q=0;q<list.length;q++){
+    var it = list[q], bx = it.p[0]-0.5, by = it.p[1]-0.5, bz = it.p[2]-0.5;
+    var edge = (COLORS[it.col] && lum(COLORS[it.col].base) > 0.45) ? EDGE_DARK : EDGE_LIGHT;
+    ctx.strokeStyle = rgb(edge, 0.9);
+    for (var fi=0; fi<6; fi++){
+      var fc = FACES[fi], n = fc.n;
+      if (n[0]*d[0]+n[1]*d[1]+n[2]*d[2] >= 0) continue;
+      if (p.cells.has(key(it.c[0]+n[0], it.c[1]+n[1], it.c[2]+n[2]))) continue;
+      var col = faceColor(it.col, n);
+      ctx.beginPath();
+      for (var vi=0; vi<4; vi++){
+        var pt = proj(bx+fc.v[vi][0], by+fc.v[vi][1], bz+fc.v[vi][2]);
+        if (vi === 0) ctx.moveTo(pt[0],pt[1]); else ctx.lineTo(pt[0],pt[1]);
+      }
+      ctx.closePath();
+      ctx.fillStyle = rgb(col); ctx.fill(); ctx.stroke();
+    }
+  }
+  updateFacing();
+}
+
+/* ---------- orientation readout + animation ---------- */
+function facingView(){
+  if (S.pitch > 86) return "top";
+  if (S.pitch < -86) return "bottom";
+  if (Math.abs(S.pitch) > 4) return null;
+  var y = ((S.yaw % 360) + 360) % 360, best = null;
+  VIEW_ORDER.forEach(function(v){
+    if (Math.abs(VIEWS[v].pitch) > 0) return;
+    var diff = Math.abs(((y - VIEWS[v].yaw + 540) % 360) - 180);
+    if (180 - diff < 4) best = v;
+  });
+  return best;
+}
+function updateFacing(){
+  var v = facingView(), el = $("#facing"), p = currentPz();
+  el.querySelector("b").textContent = v ? VIEWS[v].label : "มุมเฉียง";
+  el.classList.toggle("on", !!v && v === p.ask);
+  var bar = $("#viewbar");
+  if (bar) Array.prototype.forEach.call(bar.querySelectorAll("[data-view]"), function(b){
+    b.setAttribute("aria-pressed", String(b.dataset.view === v));
+  });
+}
+var anim = null;
+var reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+function animateTo(yaw, pitch){
+  var delta = ((yaw - S.yaw + 540) % 360) - 180;
+  if (reduce.matches){ S.yaw = yaw; S.pitch = pitch; draw(); return; }
+  anim = {y0:S.yaw, dy:delta, p0:S.pitch, dp:pitch - S.pitch, t0:performance.now(), dur:520};
+  requestAnimationFrame(step);
+}
+function step(ts){
+  if (!anim) return;
+  var t = Math.min(1, (ts - anim.t0)/anim.dur);
+  var e = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
+  S.yaw = anim.y0 + anim.dy*e;
+  S.pitch = anim.p0 + anim.dp*e;
+  draw();
+  if (t < 1) requestAnimationFrame(step); else { anim = null; }
+}
+function goView(v){ anim = null; animateTo(VIEWS[v].yaw, VIEWS[v].pitch); }
+function goIso(){ anim = null; S.zoom = 1; animateTo(ISO.yaw, ISO.pitch); }
+
+/* one finger orbits, two fingers pinch to zoom */
+var pts = new Map(), pinch = null;
+function spread(){
+  var a = Array.from(pts.values());
+  return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+}
+stage.addEventListener("pointerdown", function(e){
+  anim = null;
+  stage.setPointerCapture(e.pointerId);
+  pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  if (pts.size === 2) pinch = {d: spread(), z: S.zoom};
+  stage.classList.add("dragging");
+});
+stage.addEventListener("pointermove", function(e){
+  var prev = pts.get(e.pointerId);
+  if (!prev) return;
+  var dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+  prev.x = e.clientX; prev.y = e.clientY;
+  if (pts.size >= 2){
+    if (pinch && pinch.d > 0){
+      S.zoom = Math.max(0.55, Math.min(2.2, pinch.z * spread()/pinch.d));
+      draw();
+    }
+    return;
+  }
+  S.yaw += dx*0.55;   /* ลากไปทางไหน กล่องหมุนตามไปทางนั้น */
+  S.pitch = Math.max(-90, Math.min(90, S.pitch + dy*0.5));
+  draw();
+});
+function endDrag(e){
+  if (e && e.pointerId !== undefined) pts.delete(e.pointerId);
+  if (pts.size < 2) pinch = null;
+  if (!pts.size) stage.classList.remove("dragging");
+}
+stage.addEventListener("pointerup", endDrag);
+stage.addEventListener("pointercancel", endDrag);
+stage.addEventListener("wheel", function(e){
+  e.preventDefault();
+  S.zoom = Math.max(0.55, Math.min(2.2, S.zoom * (e.deltaY > 0 ? 0.92 : 1.08)));
+  draw();
+}, {passive:false});
+
+/* view buttons */
+function renderViewbar(){
+  var p = currentPz(), bar = $("#viewbar");
+  bar.innerHTML = "";
+  VIEW_ORDER.forEach(function(v){
+    var b = document.createElement("button");
+    b.className = "vbtn" + (S.mode === "play" && v === p.ask ? " ask" : "");
+    b.dataset.view = v; b.type = "button";
+    b.textContent = VIEWS[v].label;
+    b.setAttribute("aria-pressed","false");
+    b.addEventListener("click", function(){ goView(v); });
+    bar.appendChild(b);
+  });
+  var sp = document.createElement("span"); sp.className = "spacer"; bar.appendChild(sp);
+  var rb = document.createElement("button");
+  rb.type = "button"; rb.className = "ghost"; rb.textContent = "↺ มุมเฉียง (รีเซ็ต)";
+  rb.addEventListener("click", goIso);
+  bar.appendChild(rb);
+  updateFacing();
+}
+
+/* ---------- colour swatches ---------- */
+function renderPalette(host, current, withEraser, pick){
+  Array.prototype.slice.call(host.querySelectorAll(".sw")).forEach(function(n){ n.remove(); });
+  var items = COLOR_ORDER.slice();
+  if (withEraser) items.push(null);
+  items.forEach(function(cid){
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "sw" + (cid === null ? " eraser" : "");
+    b.setAttribute("aria-pressed", String(cid === current));
+    var i = document.createElement("i");
+    if (cid) i.style.background = COLORS[cid].flat;
+    var t = document.createTextNode(cid ? COLORS[cid].label : "ลบ");
+    b.appendChild(i); b.appendChild(t);
+    b.addEventListener("click", function(){ pick(cid); });
+    host.appendChild(b);
+  });
+}
+
+/* ---------- answer grid ---------- */
+function styleCell(btn){
+  var k = btn.dataset.k, c = S.ans[k];
+  btn.className = "cell" + (c ? " filled" : "")
+    + (S.revealed && c ? " reveal" : "")
+    + (S.marks && S.marks[k] ? " " + S.marks[k] : "");
+  btn.style.background = c ? COLORS[c].flat : "";
+  btn.setAttribute("aria-pressed", c ? "true" : "false");
+  var rc = k.split(",");
+  btn.setAttribute("aria-label", "แถว " + (+rc[0]+1) + " หลัก " + (+rc[1]+1)
+    + " · " + (c ? COLORS[c].label : "ว่าง"));
+}
+function restyleAll(){
+  Array.prototype.forEach.call($("#grid").children, styleCell);
+}
+function renderGrid(){
+  var p = S.pz, g = gridSpec(p, p.ask), pad = $("#grid");
+  var cs = Math.min(56, Math.max(32, Math.round(250/Math.max(g.cols, g.rows))));
+  pad.style.setProperty("--cs", cs+"px");
+  pad.style.gridTemplateColumns = "repeat("+g.cols+", "+cs+"px)";
+  pad.innerHTML = "";
+  for (var r=0; r<g.rows; r++){
+    for (var c=0; c<g.cols; c++){
+      var btn = document.createElement("button");
+      btn.type = "button"; btn.dataset.k = r+","+c;
+      styleCell(btn);
+      pad.appendChild(btn);
+    }
+  }
+  var across = AXIS_WORD[g.ca.i+","+g.ca.s], down = AXIS_WORD[g.ua.i+","+(-g.ua.s)];
+  $("#axisHint").innerHTML = "<span>แนวนอน: <b>"+across+"</b></span><span>·</span><span>แนวตั้ง: <b>"+down+"</b></span>";
+  $("#rightMeta").textContent = g.cols+" × "+g.rows+" ช่อง";
+  refreshPlayPalette();
+}
+function refreshPlayPalette(){
+  renderPalette($("#palPlay"), S.paintColor, true, function(cid){
+    S.paintColor = cid; refreshPlayPalette();
+  });
+}
+var paintMode; // colour id, or null for erase
+function cellAt(x,y){
+  var el = document.elementFromPoint(x,y);
+  return (el && el.parentNode === $("#grid")) ? el : null;
+}
+function applyPaint(el){
+  if (!el || paintMode === undefined) return;
+  var k = el.dataset.k, now = S.ans[k] || null;
+  if (now === paintMode) return;
+  if (paintMode) S.ans[k] = paintMode; else delete S.ans[k];
+  if (S.marks || S.revealed){
+    S.marks = null; S.revealed = false; setVerdict("","");
+    restyleAll();
+  } else styleCell(el);
+}
+$("#grid").addEventListener("pointerdown", function(e){
+  var el = cellAt(e.clientX, e.clientY); if (!el) return;
+  e.preventDefault();
+  var now = S.ans[el.dataset.k] || null;
+  paintMode = (S.paintColor === null || now === S.paintColor) ? null : S.paintColor;
+  applyPaint(el);
+  $("#grid").setPointerCapture(e.pointerId);
+});
+$("#grid").addEventListener("pointermove", function(e){
+  if (paintMode === undefined) return;
+  applyPaint(cellAt(e.clientX, e.clientY));
+});
+function endPaint(){ paintMode = undefined; }
+$("#grid").addEventListener("pointerup", endPaint);
+$("#grid").addEventListener("pointercancel", endPaint);
+
+function setVerdict(text, cls){
+  var v = $("#verdict"); v.textContent = text; v.className = "verdict" + (cls ? " "+cls : "");
+}
+function checkAnswer(){
+  var p = S.pz, correct = projectSet(p, p.ask), g = gridSpec(p, p.ask);
+  var marks = {}, extra = 0, missing = 0, wrong = 0, hit = 0;
+  var need = Object.keys(correct).length;
+  for (var r=0; r<g.rows; r++) for (var c=0; c<g.cols; c++){
+    var k = r+","+c, a = S.ans[k] || null, w = correct[k] || null;
+    if (a && w && a === w){ marks[k] = "ok"; hit++; }
+    else if (a && w){ marks[k] = "badcolor"; wrong++; }
+    else if (a && !w){ marks[k] = "extra"; extra++; }
+    else if (!a && w){ marks[k] = "gap"; missing++; }
+  }
+  S.marks = marks; S.revealed = false;
+  restyleAll();
+  if (!extra && !missing && !wrong){
+    setVerdict("ถูกทั้งหมด " + need + " ช่อง — เก่งมาก!", "good");
+  } else {
+    var msg = [];
+    if (missing) msg.push("ยังขาด " + missing + " ช่อง");
+    if (wrong) msg.push("สีผิด " + wrong + " ช่อง");
+    if (extra) msg.push("ระบายเกิน " + extra + " ช่อง");
+    setVerdict("ถูก " + hit + " จาก " + need + " ช่อง · " + msg.join(" · "), "bad");
+  }
+}
+function revealAnswer(){
+  var p = S.pz;
+  S.ans = projectSet(p, p.ask);
+  S.marks = null; S.revealed = true;
+  restyleAll();
+  goView(p.ask);
+  setVerdict("นี่คือเฉลย — รูปทรงหมุนไปอยู่ที่" + VIEWS[p.ask].label + "แล้ว ลองเทียบสีทีละช่องดู", "note");
+}
+function clearGrid(){
+  S.ans = {}; S.marks = null; S.revealed = false;
+  if ($("#grid").children.length) restyleAll();
+  setVerdict("","");
+}
+/* ---------- builder ---------- */
+var DIMS = [
+  {k:"w", label:"กว้าง", max:5},
+  {k:"d", label:"ลึก",  max:5},
+  {k:"h", label:"สูง",  max:4}
+];
+function trimCells(b){
+  var keep = new Map();
+  b.cells.forEach(function(col, k){
+    var c = k.split(",").map(Number);
+    if (c[0] < b.w && c[1] < b.d && c[2] < b.h) keep.set(k, col);
+  });
+  b.cells = keep;
+}
+function renderDims(){
+  var b = S.build, host = $("#dims"); host.innerHTML = "";
+  DIMS.forEach(function(dm){
+    var w = document.createElement("div"); w.className = "dim";
+    var lb = document.createElement("label"); lb.textContent = dm.label;
+    var mi = document.createElement("button"); mi.type="button"; mi.className="step"; mi.textContent="−";
+    mi.setAttribute("aria-label","ลด"+dm.label);
+    var val = document.createElement("span"); val.className="val num"; val.textContent = b[dm.k];
+    var pl = document.createElement("button"); pl.type="button"; pl.className="step"; pl.textContent="+";
+    pl.setAttribute("aria-label","เพิ่ม"+dm.label);
+    mi.addEventListener("click", function(){ if (b[dm.k] > 1){ b[dm.k]--; trimCells(b); renderBuild(); } });
+    pl.addEventListener("click", function(){ if (b[dm.k] < dm.max){ b[dm.k]++; renderBuild(); } });
+    w.appendChild(lb); w.appendChild(mi); w.appendChild(val); w.appendChild(pl);
+    host.appendChild(w);
+  });
+}
+function refreshBrush(){
+  renderPalette($("#palBuild"), S.brush, false, function(cid){
+    S.brush = cid; refreshBrush();
+  });
+}
+function renderLayers(){
+  var b = S.build, host = $("#layers"); host.innerHTML = "";
+  for (var z = b.h-1; z >= 0; z--){
+    (function(z){
+      var card = document.createElement("div"); card.className = "layer";
+      var cap = document.createElement("div"); cap.className = "cap";
+      var n = 0; b.cells.forEach(function(col, k){ if (Number(k.split(",")[2]) === z) n++; });
+      cap.innerHTML = "<b>ชั้นที่ "+(z+1)+"</b><span class='num'>"+n+" ก้อน</span>";
+      var plan = document.createElement("div"); plan.className = "plan";
+      plan.style.gridTemplateColumns = "repeat("+b.w+", 26px)";
+      for (var row = 0; row < b.d; row++){
+        for (var x = 0; x < b.w; x++){
+          var y = b.d-1-row, kk = key(x,y,z);
+          var btn = document.createElement("button");
+          btn.type = "button"; btn.dataset.k = kk;
+          var col = b.cells.get(kk);
+          btn.setAttribute("aria-pressed", String(!!col));
+          btn.setAttribute("aria-label","ชั้น "+(z+1)+" ตำแหน่ง "+(x+1)+","+(y+1)
+            + " · " + (col ? COLORS[col].label : "ว่าง"));
+          if (col) btn.style.background = COLORS[col].flat;
+          else if (z > 0 && b.cells.has(key(x,y,z-1))) btn.className = "under";
+          btn.addEventListener("click", function(){
+            var t = this.dataset.k;
+            if (b.cells.get(t) === S.brush) b.cells.delete(t);
+            else b.cells.set(t, S.brush);
+            renderLayers(); draw(); updateHead(); buildMsg("");
+          });
+          plan.appendChild(btn);
+        }
+      }
+      card.appendChild(cap); card.appendChild(plan);
+      host.appendChild(card);
+    })(z);
+  }
+}
+function buildMsg(t, cls){
+  var el = $("#buildMsg"); el.textContent = t; el.className = "verdict" + (cls ? " "+cls : "");
+}
+function renderBuild(){
+  refreshBrush(); renderDims(); renderLayers(); draw(); updateHead();
+  $("#nmIn").value = S.build.name || "";
+  $("#askSel2").value = S.build.ask;
+}
+function randomShape(){
+  var b = S.build;
+  b.w = 2 + Math.floor(Math.random()*3);
+  b.d = 2 + Math.floor(Math.random()*2);
+  b.h = 2 + Math.floor(Math.random()*2);
+  b.cells = new Map();
+  var pick = function(){ return COLOR_ORDER[Math.floor(Math.random()*COLOR_ORDER.length)]; };
+  var target = 4 + Math.floor(Math.random()*(b.w*b.d));
+  b.cells.set(key(Math.floor(Math.random()*b.w), Math.floor(Math.random()*b.d), 0), pick());
+  var guard = 0;
+  while (b.cells.size < target && guard++ < 400){
+    var arr = Array.from(b.cells.keys());
+    var c = arr[Math.floor(Math.random()*arr.length)].split(",").map(Number);
+    var dir = [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1]][Math.floor(Math.random()*5)];
+    var x = c[0]+dir[0], y = c[1]+dir[1], z = c[2]+dir[2];
+    if (x < 0 || y < 0 || z < 0 || x >= b.w || y >= b.d || z >= b.h) continue;
+    if (z > 0 && !b.cells.has(key(x,y,z-1))) continue;
+    b.cells.set(key(x,y,z), pick());
+  }
+  b.ask = VIEW_ORDER[Math.floor(Math.random()*4)];
+  b.name = "รูปทรงสุ่ม";
+  b.lvl = null;
+  renderBuild();
+  buildMsg("สุ่มรูปทรงใหม่แล้ว " + b.cells.size + " ก้อน", "note");
+}
+/* ---------- library + share codes ---------- */
+STARTERS.forEach(function(p, i){ p.id = "s" + i; });
+var LS_KEY = "block-views.saved.v2";
+var CODE_N = {w:1, g:2, k:3}, CODE_C = {1:"w", 2:"g", 3:"k"};
+
+function toJSON(p){
+  var cells = [];
+  p.cells.forEach(function(col, k){ cells.push(k + ":" + col); });
+  return {id:p.id, name:p.name, w:p.w, d:p.d, h:p.h, ask:p.ask, cells:cells};
+}
+function fromJSON(o){
+  var m = new Map();
+  (o.cells || []).forEach(function(s){
+    var i = s.lastIndexOf(":");
+    m.set(s.slice(0, i), colorOf(s.slice(i+1)));
+  });
+  return {id:o.id, name:o.name, w:o.w, d:o.d, h:o.h,
+          ask: VIEWS[o.ask] ? o.ask : "front", cells:m};
+}
+function loadSaved(){
+  try {
+    var raw = localStorage.getItem(LS_KEY);
+    return raw ? JSON.parse(raw).map(fromJSON) : [];
+  } catch (e){ return []; }
+}
+function persist(){
+  try { localStorage.setItem(LS_KEY, JSON.stringify(S.saved.map(toJSON))); } catch (e){}
+}
+function encode(p){
+  var n = 1n;
+  for (var z=0; z<p.h; z++) for (var y=0; y<p.d; y++) for (var x=0; x<p.w; x++){
+    var c = p.cells.get(key(x,y,z));
+    n = n*4n + BigInt(c ? CODE_N[c] : 0);
+  }
+  var head = "" + p.w + p.d + p.h + VIEWS[p.ask].key;
+  var nm = (p.name || "").replace(/-/g, " ").trim();
+  return head + "-" + n.toString(36) + (nm ? "-" + nm : "");
+}
+function decode(code){
+  var parts = String(code).trim().split("-");
+  if (parts.length < 2) throw 0;
+  var head = parts[0];
+  var w = +head[0], d = +head[1], h = +head[2], vk = head[3];
+  if (!(w > 0 && d > 0 && h > 0)) throw 0;
+  var view = "front";
+  VIEW_ORDER.forEach(function(v){ if (VIEWS[v].key === vk) view = v; });
+  var n = 0n, str = parts[1].toLowerCase();
+  for (var i=0; i<str.length; i++){
+    var dg = parseInt(str[i], 36);
+    if (isNaN(dg)) throw 0;
+    n = n*36n + BigInt(dg);
+  }
+  var bits = n.toString(2).slice(1), need = w*d*h;
+  var wide = bits.length === need*2;               /* 2 bits per square: ว่าง/ขาว/เทา/ดำ */
+  if (!wide && bits.length !== need) throw 0;      /* 1 bit per square = รหัสรุ่นแรก */
+  var cells = new Map(), q = 0;
+  for (var z=0; z<h; z++) for (var y=0; y<d; y++) for (var x=0; x<w; x++){
+    if (wide){
+      var v = parseInt(bits.substr(q,2), 2); q += 2;
+      if (v) cells.set(key(x,y,z), CODE_C[v]);
+    } else if (bits[q++] === "1") cells.set(key(x,y,z), "k");
+  }
+  var name = parts.slice(2).join("-").trim();
+  if (name.indexOf("%") >= 0){ try { name = decodeURIComponent(name); } catch (e){} }
+  return {name: name || "โจทย์จากรหัส",
+          w:w, d:d, h:h, ask:view, cells:cells};
+}
+function colorsUsed(p){
+  var seen = {};
+  p.cells.forEach(function(c){ seen[c] = 1; });
+  return COLOR_ORDER.filter(function(c){ return seen[c]; });
+}
+function makeCard(p, deletable){
+  var card = document.createElement("div");
+  card.className = "card"; card.setAttribute("role","button"); card.tabIndex = 0;
+  card.setAttribute("aria-current", String(p.id === S.pz.id));
+  var nm = document.createElement("span"); nm.className = "nm"; nm.textContent = p.name;
+  var mt = document.createElement("span"); mt.className = "meta num";
+  mt.textContent = p.w+"×"+p.d+"×"+p.h + " · " + p.cells.size + " ก้อน";
+  var ch = document.createElement("span"); ch.className = "chips";
+  colorsUsed(p).forEach(function(c){
+    var i = document.createElement("i"); i.style.background = COLORS[c].flat;
+    i.title = COLORS[c].label; ch.appendChild(i);
+  });
+  var tg = document.createElement("span"); tg.className = "tag";
+  tg.textContent = "ถาม" + VIEWS[p.ask].label;
+  card.appendChild(nm); card.appendChild(mt); card.appendChild(ch); card.appendChild(tg);
+  var open = function(){ loadPuzzle(p); };
+  card.addEventListener("click", open);
+  card.addEventListener("keydown", function(ev){
+    if (ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); open(); }
+  });
+  if (deletable){
+    var del = document.createElement("span");
+    del.className = "del" + (S.armed === p.id ? " arm" : "");
+    del.setAttribute("role","button"); del.tabIndex = 0;
+    del.title = "ลบโจทย์นี้"; del.textContent = "×";
+    var kill = function(ev){
+      ev.stopPropagation();
+      if (S.armed !== p.id){
+        S.armed = p.id; renderCards();
+        $("#shelfNote").textContent = "กด × อีกครั้งเพื่อลบ “" + p.name + "”";
+        return;
+      }
+      S.saved = S.saved.filter(function(x){ return x.id !== p.id; });
+      S.armed = null; persist(); renderCards();
+      $("#shelfNote").textContent = "ลบแล้ว";
+    };
+    del.addEventListener("click", kill);
+    del.addEventListener("keydown", function(ev){
+      if (ev.key === "Enter" || ev.key === " ") kill(ev);
+    });
+    card.appendChild(del);
+  }
+  return card;
+}
+function renderCards(){
+  var host = $("#shelfBody"); host.innerHTML = "";
+  function group(title, list, deletable){
+    if (!list.length) return;
+    var g = document.createElement("section"); g.className = "group";
+    var h = document.createElement("h3"); h.textContent = title;
+    var row = document.createElement("div"); row.className = "cards";
+    list.forEach(function(p){ row.appendChild(makeCard(p, deletable)); });
+    g.appendChild(h); g.appendChild(row); host.appendChild(g);
+  }
+  [1,2,3].forEach(function(lv){
+    group(LEVELS[lv], STARTERS.filter(function(p){ return p.lvl === lv; }), false);
+  });
+  group("โจทย์ที่บันทึกไว้ในเครื่องนี้", S.saved, true);
+}
+/* ---------- heads, modes, wiring ---------- */
+function updateHead(){
+  var p = currentPz();
+  $("#pzName").textContent = S.mode === "build" ? "รูปทรงที่กำลังสร้าง" : p.name;
+  $("#pzMeta").textContent = p.w+"×"+p.d+"×"+p.h + " · " + p.cells.size + " ก้อน";
+  $("#rightTitle").textContent = S.mode === "build" ? "แบบร่างโจทย์" : "ตารางคำตอบ";
+  if (S.mode === "build") $("#rightMeta").textContent = "ผังทีละชั้น";
+  $("#askName").textContent = VIEWS[S.pz.ask].label;
+}
+function fillSelect(sel){
+  sel.innerHTML = "";
+  VIEW_ORDER.forEach(function(v){
+    var o = document.createElement("option");
+    o.value = v; o.textContent = VIEWS[v].label;
+    sel.appendChild(o);
+  });
+}
+function renderAll(){
+  updateHead(); renderViewbar();
+  if (S.mode === "play"){ renderGrid(); $("#askSel").value = S.pz.ask; }
+  else renderBuild();
+  renderCards();
+  $("#codeOut").value = encode(S.pz);
+  draw();
+}
+function loadPuzzle(p){
+  S.pz = clonePz(p);
+  S.build = clonePz(p); S.build.starter = false; S.build.id = null;
+  S.armed = null;
+  clearGrid();
+  $("#shelfNote").textContent = "แตะการ์ดเพื่อเปลี่ยนรูปทรง";
+  setMode("play");
+  S.zoom = 1; anim = null; S.yaw = ISO.yaw; S.pitch = ISO.pitch;
+  renderAll();
+}
+function setMode(m){
+  S.mode = m;
+  if (m === "build" && !S.build){ S.build = clonePz(S.pz); S.build.starter = false; S.build.id = null; }
+  $("#playBody").hidden = (m !== "play");
+  $("#buildBody").hidden = (m !== "build");
+  Array.prototype.forEach.call(document.querySelectorAll(".modes button"), function(b){
+    b.setAttribute("aria-pressed", String(b.dataset.mode === m));
+  });
+  renderAll();
+}
+Array.prototype.forEach.call(document.querySelectorAll(".modes button"), function(b){
+  b.addEventListener("click", function(){ setMode(b.dataset.mode); });
+});
+$("#btnCheck").addEventListener("click", checkAnswer);
+$("#btnClear").addEventListener("click", clearGrid);
+$("#btnReveal").addEventListener("click", revealAnswer);
+$("#askSel").addEventListener("change", function(){
+  S.pz.ask = this.value; clearGrid(); renderAll();
+});
+$("#askSel2").addEventListener("change", function(){ S.build.ask = this.value; renderViewbar(); });
+$("#nmIn").addEventListener("input", function(){ S.build.name = this.value; });
+$("#btnRand").addEventListener("click", randomShape);
+$("#btnEmpty").addEventListener("click", function(){
+  S.build.cells = new Map(); renderBuild(); buildMsg("ล้างบล็อกแล้ว เริ่มวางใหม่ได้เลย","note");
+});
+$("#btnUse").addEventListener("click", function(){
+  if (!S.build.cells.size){ buildMsg("ต้องวางบล็อกอย่างน้อย 1 ก้อนก่อน","bad"); return; }
+  var p = clonePz(S.build);
+  p.name = (S.build.name || "").trim() || "โจทย์ของฉัน";
+  p.id = "draft"; p.starter = false;
+  S.pz = p; clearGrid(); setMode("play");
+  S.zoom = 1; anim = null; S.yaw = ISO.yaw; S.pitch = ISO.pitch;
+  renderAll();
+});
+$("#btnSave").addEventListener("click", function(){
+  if (!S.build.cells.size){ buildMsg("ต้องวางบล็อกอย่างน้อย 1 ก้อนก่อน","bad"); return; }
+  var p = clonePz(S.build);
+  p.name = (S.build.name || "").trim() || "โจทย์ของฉัน";
+  p.id = "u" + Date.now().toString(36);
+  p.starter = false;
+  S.saved.push(p); persist(); renderCards();
+  buildMsg("บันทึก “"+p.name+"” ลงคลังแล้ว (เก็บไว้ในเครื่องนี้)","good");
+});
+$("#btnCopy").addEventListener("click", function(){
+  var el = $("#codeOut");
+  el.select(); el.setSelectionRange(0, 99999);
+  var done = function(){ $("#shelfNote").textContent = "คัดลอกรหัสแล้ว — ส่งให้เด็ก ๆ วางในช่อง “เปิดจากรหัส”"; };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(el.value).then(done, function(){
+      $("#shelfNote").textContent = "กด Ctrl/Cmd + C เพื่อคัดลอกรหัสที่เลือกไว้";
+    });
+  } else $("#shelfNote").textContent = "กด Ctrl/Cmd + C เพื่อคัดลอกรหัสที่เลือกไว้";
+});
+$("#btnLoad").addEventListener("click", function(){
+  var v = $("#codeIn").value.trim();
+  if (!v) return;
+  try {
+    var p = decode(v);
+    loadPuzzle(p);
+    $("#codeIn").value = "";
+    $("#shelfNote").textContent = "เปิดโจทย์ “"+p.name+"” จากรหัสแล้ว";
+  } catch (e){
+    $("#shelfNote").textContent = "รหัสไม่ถูกต้อง ลองตรวจดูอีกครั้ง";
+  }
+});
+$("#codeIn").addEventListener("keydown", function(e){ if (e.key === "Enter") $("#btnLoad").click(); });
+
+/* ---------- boot ---------- */
+fillSelect($("#askSel")); fillSelect($("#askSel2"));
+S.saved = loadSaved();
+S.build = clonePz(S.pz); S.build.starter = false; S.build.id = null;
+refreshPalette();
+if (window.ResizeObserver) new ResizeObserver(fit).observe(stage);
+window.addEventListener("resize", fit);
+var dm = window.matchMedia("(prefers-color-scheme: dark)");
+if (dm.addEventListener) dm.addEventListener("change", function(){ refreshPalette(); draw(); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+renderAll();
+fit();
+})();
+</script>
+<style>
+.gridpad .cell.reveal{box-shadow:inset 0 0 0 3px var(--accent)}
+</style>
