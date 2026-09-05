@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" media="(prefers-color-scheme: light)" content="#EDEFEA">
-<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#101920">
+<meta name="theme-color" content="#173840">
 <meta name="description" content="สื่อฝึกมองรูปทรงลูกบาศก์จากทั้งหกด้าน สำหรับชั้นประถม">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="มองบล็อกหกด้าน">
@@ -21,39 +20,22 @@ img{max-width:100%}
 <body>
 <style>
 :root{
-  --paper:#EDEFEA; --surface:#F8F9F6; --surface2:#E3E8E1; --sunk:#E6EAE4;
-  --ink:#14202B; --ink2:#4D5F68; --ink3:#7C8D93;
-  --line:#C6CFC9; --line2:#ABB8B1;
-  --accent:#C06810; --accent-soft:#F6E3CC; --accent-line:#E0B481;
-  --good:#2F7C4C; --good-soft:#D8ECDE;
-  --miss:#B23A31; --miss-soft:#F5DDDA;
-  --focus:#1D6E80;
-  --stage-bg:#3A7079;      /* พื้นเวที: สีเดียวทั้งสองโหมด ห่างจากขาว/เทา/ดำ ของบล็อก */
-  --stage-line:rgba(255,255,255,.30);
-  --stage-ink:rgba(255,255,255,.78);
-  --shadow:0 1px 0 rgba(20,32,43,.05), 0 10px 24px -18px rgba(20,32,43,.55);
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --paper:#101920; --surface:#18242C; --surface2:#24333C; --sunk:#131E25;
-    --ink:#E9EFEB; --ink2:#A2B2B9; --ink3:#7E9098;
-    --line:#31444E; --line2:#40575F;
-    --accent:#E9A250; --accent-soft:#39291A; --accent-line:#6B4E2C;
-    --good:#63B586; --good-soft:#1C3428;
-    --miss:#E07469; --miss-soft:#3B221F;
-    --focus:#82C9D8;
-    --shadow:0 1px 0 rgba(0,0,0,.25), 0 10px 24px -18px rgba(0,0,0,.9);
-  }
-}
-:root[data-theme="dark"]{
-  --paper:#101920; --surface:#18242C; --surface2:#24333C; --sunk:#131E25;
-  --ink:#E9EFEB; --ink2:#A2B2B9; --ink3:#7E9098;
-  --line:#31444E; --line2:#40575F;
-  --accent:#E9A250; --accent-soft:#39291A; --accent-line:#6B4E2C;
-  --good:#63B586; --good-soft:#1C3428;
-  --miss:#E07469; --miss-soft:#3B221F;
-  --focus:#82C9D8;
-  --shadow:0 1px 0 rgba(0,0,0,.25), 0 10px 24px -18px rgba(0,0,0,.9);
+  /* พาเลตต์เดียวคงที่ทั้งแอป — โทนเขียวน้ำทะเล ไม่ทับกับขาว/เทา/ดำ ของบล็อก */
+  color-scheme:dark;
+  --paper:#173840;        /* พื้นหน้าเว็บ */
+  --surface:#22505A;      /* แผงและการ์ด */
+  --surface2:#2B6270;     /* หัวแผงและแถบ */
+  --sunk:#122C33;         /* ช่องกรอกและช่องว่างในผังชั้น */
+  --ink:#EAF4F4; --ink2:#AECBD0; --ink3:#93B7BD;
+  --line:#3B6D78; --line2:#4E8794;
+  --accent:#F2A756; --accent-soft:#4B3722; --accent-line:#8A6435;
+  --good:#63C48D; --good-soft:#1E4736;
+  --miss:#F0837A; --miss-soft:#4E2622;
+  --focus:#8AD3E2;
+  --stage-bg:#3A7079;     /* พื้นเวที สว่างกว่าแผงเพื่อให้บล็อกเด่น */
+  --stage-line:rgba(255,255,255,.28);
+  --stage-ink:rgba(255,255,255,.82);
+  --shadow:0 1px 0 rgba(0,0,0,.18), 0 12px 26px -18px rgba(0,0,0,.85);
 }
 
 *{box-sizing:border-box}
@@ -128,7 +110,7 @@ header p{margin:0;color:var(--ink2);font-size:13.5px;max-width:46ch}
 .vbtn:hover{border-color:var(--ink2);color:var(--ink)}
 .vbtn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
 .vbtn.ask{border-color:var(--accent-line);color:var(--accent)}
-.vbtn.ask[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.vbtn.ask[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--paper)}
 .spacer{flex:1}
 .ghost{background:transparent;border:1.5px dashed var(--line2);padding:6px 11px;cursor:pointer;
   font-family:Mitr,sans-serif;font-size:13px;border-radius:2px;color:var(--ink2)}
@@ -183,7 +165,7 @@ header p{margin:0;color:var(--ink2);font-size:13.5px;max-width:46ch}
 .solid{background:var(--ink);color:var(--paper);border:1.5px solid var(--ink);
   padding:8px 16px;cursor:pointer;font-family:Mitr,sans-serif;font-size:14px;border-radius:2px}
 .solid:hover{background:var(--focus);border-color:var(--focus)}
-.solid.amber{background:var(--accent);border-color:var(--accent);color:#fff}
+.solid.amber{background:var(--accent);border-color:var(--accent);color:var(--paper)}
 .solid.amber:hover{filter:brightness(1.08)}
 
 /* ---------- builder ---------- */
@@ -230,14 +212,14 @@ header p{margin:0;color:var(--ink2);font-size:13.5px;max-width:46ch}
 .card .chips{display:flex;gap:3px;margin:3px 0 1px}
 .card .chips i{width:12px;height:12px;display:block;border:1px solid var(--ink);border-radius:1px}
 .card .newbadge{position:absolute;top:6px;right:8px;font-size:10px;line-height:1.5;
-  font-family:Mitr,sans-serif;color:#fff;background:var(--good);padding:0 6px;border-radius:2px}
+  font-family:Mitr,sans-serif;color:var(--paper);background:var(--good);padding:0 6px;border-radius:2px}
 .card .tag{font-size:11px;color:var(--accent);border:1px solid var(--accent-line);
   background:var(--accent-soft);padding:0 6px;border-radius:2px;align-self:flex-start;margin-top:2px}
 .card .del{position:absolute;top:4px;right:4px;width:22px;height:22px;border:0;background:transparent;
   color:var(--ink3);cursor:pointer;font-size:14px;line-height:1;border-radius:2px;
   display:flex;align-items:center;justify-content:center}
 .card .del:hover{background:var(--miss-soft);color:var(--miss)}
-.card .del.arm{background:var(--miss);color:#fff}
+.card .del.arm{background:var(--miss);color:var(--paper)}
 
 .codebar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;
   border-top:1.5px dashed var(--line2);padding-top:12px}
@@ -447,7 +429,7 @@ footer .ver{display:block;margin-top:4px;font-family:"IBM Plex Mono",monospace;f
   </section>
 
   <footer>สื่อฝึกมองภาพสามมิติ — ลากรูปทรงเพื่อหมุนดูได้ทุกด้าน กดปุ่ม <b>มุมเฉียง</b> เพื่อคืนตำแหน่งเดิม
-    <span class="ver">รุ่น B2 · จอกว้าง <b id="vwOut">–</b> px · <b id="layoutOut">–</b></span>
+    <span class="ver">รุ่น B3 · จอกว้าง <b id="vwOut">–</b> px · <b id="layoutOut">–</b></span>
   </footer>
 </div>
 
