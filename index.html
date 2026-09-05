@@ -104,6 +104,11 @@ header p{margin:0;color:var(--ink2);font-size:13.5px;max-width:46ch}
 .stage .facing b{font-family:Mitr,sans-serif;font-weight:500}
 .stage .facing.on{border-color:var(--accent-line);background:var(--accent-soft);color:var(--accent)}
 .stage .hint{position:absolute;right:10px;bottom:9px;font-size:11.5px;color:var(--ink3)}
+.stage .pzchip{display:none;position:absolute;right:10px;top:10px;font-size:11.5px;
+  background:color-mix(in srgb,var(--surface) 88%,transparent);border:1px solid var(--line);
+  padding:3px 9px;border-radius:2px;color:var(--ink2)}
+.taskrow{display:flex;flex-direction:column;gap:12px}
+.askline .qs{display:none}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--ink3);flex:0 0 auto}
 .facing.on .dot{background:var(--accent)}
 
@@ -241,17 +246,26 @@ footer{font-size:12px;color:var(--ink3);border-top:1px solid var(--line);padding
   .modes button{padding:6px 13px;font-size:13.5px}
 
   /* รูปทรงอยู่บน ตารางอยู่ล่าง — ต้องเห็นครบในหน้าจอเดียว */
-  .bench{grid-template-columns:1fr;gap:8px}
+  .bench{grid-template-columns:1fr;gap:6px}
   .gutter{display:none}
-  .bench section:last-child > .head{display:none}
-  .panel > .head{padding:6px 12px}
-  .panel > .head h2{font-size:13px}
-  .panel .body{padding:10px;gap:8px}
-  .stage{aspect-ratio:auto;height:clamp(160px,26vh,220px);height:clamp(160px,26dvh,220px)}
+  .panel > .head{display:none}
+  .panel .body{padding:8px;gap:6px}
+
+  /* กล่องใหญ่ขึ้น ชื่อโจทย์ย้ายมาลอยบนเวที */
+  .stage{aspect-ratio:auto;height:clamp(190px,32vh,310px);height:clamp(190px,32dvh,310px)}
   .stage .hint{display:none}
-  .askline{padding:6px 10px}
-  .askline .v{font-size:15px}
-  .gridwrap{padding:2px 0 0}
+  .stage .pzchip{display:block}
+
+  /* แถบถามกับจานสีอยู่บรรทัดเดียวกัน */
+  .taskrow{flex-direction:row;align-items:center;gap:8px}
+  .askline{flex:0 0 auto;padding:4px 8px;gap:5px}
+  .askline .q,.askline .v,.askline .spacer{display:none}
+  .askline .qs{display:inline;font-size:12.5px;color:var(--ink2)}
+  .askline select{padding:3px 6px;font-size:13px}
+  .palette{flex:1;justify-content:flex-end;gap:6px}
+  .palette .pl{display:none}
+
+  .gridwrap{padding:0}
   .axis{display:none}
   .verdict{min-height:0}
   .verdict:empty{display:none}
@@ -261,9 +275,10 @@ footer{font-size:12px;color:var(--ink3);border-top:1px solid var(--line);padding
   .viewbar::-webkit-scrollbar{display:none}
   .viewbar .vbtn,.viewbar .ghost{flex:0 0 auto}
   .viewbar .spacer{display:none}
-  .vbtn,.ghost{padding:9px 13px}
-  .solid,.mini{padding:10px 16px}
-  .sw{padding:7px 12px 7px 7px}
+  .vbtn,.ghost{padding:7px 11px;font-size:12.5px}
+  .solid{padding:9px 14px;font-size:13.5px}
+  .mini{padding:9px 14px}
+  .sw{padding:6px}
   .palette .pl{flex-basis:100%}
   .layer .plan button{width:32px;height:32px}
 
@@ -317,6 +332,7 @@ footer{font-size:12px;color:var(--ink3);border-top:1px solid var(--line);padding
         <div class="stage" id="stage">
           <canvas id="cv"></canvas>
           <div class="facing" id="facing"><span class="dot"></span><span>กำลังมอง <b>มุมเฉียง</b></span></div>
+          <div class="pzchip num" id="pzChip"></div>
           <div class="hint">ลากเพื่อหมุน · ล้อเมาส์หรือสองนิ้วเพื่อย่อ–ขยาย</div>
         </div>
         <div class="viewbar" id="viewbar"></div>
@@ -338,15 +354,18 @@ footer{font-size:12px;color:var(--ink3);border-top:1px solid var(--line);padding
       </div>
 
       <div class="body" id="playBody">
-        <div class="askline">
-          <span class="q">โจทย์ถาม</span>
-          <span class="v" id="askName">ด้านหน้า</span>
-          <span class="spacer"></span>
-          <label class="q" for="askSel">เปลี่ยนเป็น</label>
-          <select id="askSel" aria-label="เลือกด้านที่จะตอบ"></select>
-        </div>
-        <div class="palette" id="palPlay" role="group" aria-label="เลือกสีที่จะระบาย">
-          <span class="pl">ระบายด้วยสี</span>
+        <div class="taskrow">
+          <div class="askline">
+            <span class="q">โจทย์ถาม</span>
+            <span class="v" id="askName">ด้านหน้า</span>
+            <span class="qs">ถาม</span>
+            <span class="spacer"></span>
+            <label class="q" for="askSel">เปลี่ยนเป็น</label>
+            <select id="askSel" aria-label="เลือกด้านที่จะตอบ"></select>
+          </div>
+          <div class="palette" id="palPlay" role="group" aria-label="เลือกสีที่จะระบาย">
+            <span class="pl">ระบายด้วยสี</span>
+          </div>
         </div>
         <div class="gridwrap"><div class="gridpad" id="grid"></div></div>
         <div class="axis" id="axisHint"></div>
@@ -782,7 +801,9 @@ function restyleAll(){
 }
 function renderGrid(){
   var p = S.pz, g = gridSpec(p, p.ask), pad = $("#grid");
-  var cs = Math.min(56, Math.max(32, Math.round(250/Math.max(g.cols, g.rows))));
+  var cs = window.innerWidth <= 820
+    ? 96                                    /* เริ่มใหญ่สุด แล้วให้ fitGridToScreen หดตามที่ว่างจริง */
+    : Math.min(56, Math.max(32, Math.round(250/Math.max(g.cols, g.rows))));
   pad.style.setProperty("--cs", cs+"px");
   pad.style.gridTemplateColumns = "repeat("+g.cols+", "+cs+"px)";
   pad.innerHTML = "";
@@ -813,10 +834,10 @@ function fitGridToScreen(){
   var g = gridSpec(S.pz, S.pz.ask), cs = cur;
   if (window.innerWidth <= 820 && window.scrollY < 40){
     var top = pad.parentNode.getBoundingClientRect().top;
-    var avail = window.innerHeight - top - acts.offsetHeight - 26;
-    cs = Math.max(26, Math.min(cur, Math.floor((avail - 10)/g.rows)));
+    var avail = window.innerHeight - top - acts.offsetHeight - 34;
+    cs = Math.max(26, Math.min(96, Math.floor((avail - 12)/g.rows)));
   }
-  var wide = Math.floor((pad.parentNode.clientWidth - 16)/g.cols);
+  var wide = Math.floor((pad.parentNode.clientWidth - 14)/g.cols);
   if (wide > 20) cs = Math.min(cs, wide);
   if (cs !== cur){
     pad.style.setProperty("--cs", cs+"px");
@@ -1132,6 +1153,7 @@ function updateHead(){
   var p = currentPz();
   $("#pzName").textContent = S.mode === "build" ? "รูปทรงที่กำลังสร้าง" : p.name;
   $("#pzMeta").textContent = p.w+"×"+p.d+"×"+p.h + " · " + p.cells.size + " ก้อน";
+  $("#pzChip").textContent = (S.mode === "build" ? "กำลังสร้าง" : p.name) + " · " + p.cells.size + " ก้อน";
   $("#rightTitle").textContent = S.mode === "build" ? "แบบร่างโจทย์" : "ตารางคำตอบ";
   if (S.mode === "build") $("#rightMeta").textContent = "ผังทีละชั้น";
   $("#askName").textContent = VIEWS[S.pz.ask].label;
