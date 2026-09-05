@@ -214,21 +214,57 @@ header p{margin:0;color:var(--ink2);font-size:13.5px;max-width:46ch}
 footer{font-size:12px;color:var(--ink3);border-top:1px solid var(--line);padding-top:10px}
 
 @media (max-width:820px){
-  body{padding:16px 13px 32px}
-  .bench{grid-template-columns:1fr;gap:0}
-  .gutter{flex-direction:row;padding:10px 0}
-  .gutter svg{transform:rotate(90deg)}
+  body{padding:14px 13px 28px}
+  .wrap{gap:14px}
   h1{font-size:22px}
-  header{align-items:flex-start}
+  header{align-items:flex-start;padding-bottom:10px}
   header .brand{flex-direction:column;gap:2px}
-  .palette .pl{flex-basis:100%}
-  .stage{aspect-ratio:1/1}
+
+  /* รูปทรงอยู่บน ตารางอยู่ล่าง */
+  .bench{grid-template-columns:1fr;gap:0}
+  .gutter{flex-direction:row;padding:6px 0}
+  .gutter svg{transform:rotate(90deg);width:26px;height:18px}
+  .gutter .lbl{display:none}
+  .panel > .head{padding:8px 12px}
+  .panel .body{padding:12px;gap:10px}
+  .stage{aspect-ratio:4/3}
+  .stage .hint{display:none}
+
+  /* ปุ่มด้านทั้งหมดอยู่แถวเดียว เลื่อนแนวนอน */
+  .viewbar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+  .viewbar::-webkit-scrollbar{display:none}
+  .viewbar .vbtn,.viewbar .ghost{flex:0 0 auto}
+  .viewbar .spacer{display:none}
   .vbtn,.ghost{padding:9px 13px}
   .solid,.mini{padding:10px 16px}
   .sw{padding:7px 12px 7px 7px}
+  .palette .pl{flex-basis:100%}
   .layer .plan button{width:32px;height:32px}
-  .stage .hint{display:none}
-  .cards{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+
+  /* คลังโจทย์ย่อเป็นแถบปัดแนวนอน */
+  .shelf{gap:8px}
+  .shelf h2{font-size:14px}
+  .shelf .top span{display:none}
+  .shelfbody{gap:10px}
+  .group{gap:6px}
+  .group h3{font-size:11.5px}
+  .cards{display:flex;overflow-x:auto;gap:8px;padding-bottom:4px;
+    scrollbar-width:none;scroll-snap-type:x proximity}
+  .cards::-webkit-scrollbar{display:none}
+  .card{flex:0 0 140px;padding:8px 10px;gap:1px;scroll-snap-align:start}
+  .card .nm{font-size:13px;line-height:1.4}
+  .card .meta{font-size:10.5px}
+  .card .chips{margin:2px 0 0}
+  .card .chips i{width:10px;height:10px}
+  .card .tag{font-size:10px;padding:0 5px;margin-top:3px}
+  .codebar{gap:6px;padding-top:10px}
+}
+@media (max-width:560px){
+  header p{display:none}
+  h1{font-size:20px}
+  .palette .pl{flex-basis:auto}
+  .sw{padding:7px}
+  .sw .lb{display:none}
 }
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
 </style>
@@ -692,7 +728,11 @@ function renderPalette(host, current, withEraser, pick){
     b.setAttribute("aria-pressed", String(cid === current));
     var i = document.createElement("i");
     if (cid) i.style.background = COLORS[cid].flat;
-    var t = document.createTextNode(cid ? COLORS[cid].label : "ลบ");
+    var t = document.createElement("span");
+    t.className = "lb";
+    t.textContent = cid ? COLORS[cid].label : "ลบ";
+    b.title = cid ? COLORS[cid].label : "ลบสี";
+    b.setAttribute("aria-label", cid ? "ระบายด้วยสี" + COLORS[cid].label : "ลบสีในช่อง");
     b.appendChild(i); b.appendChild(t);
     b.addEventListener("click", function(){ pick(cid); });
     host.appendChild(b);
