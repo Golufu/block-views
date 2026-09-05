@@ -28,6 +28,9 @@ img{max-width:100%}
   --good:#2F7C4C; --good-soft:#D8ECDE;
   --miss:#B23A31; --miss-soft:#F5DDDA;
   --focus:#1D6E80;
+  --stage-bg:#3A7079;      /* พื้นเวที: สีเดียวทั้งสองโหมด ห่างจากขาว/เทา/ดำ ของบล็อก */
+  --stage-line:rgba(255,255,255,.30);
+  --stage-ink:rgba(255,255,255,.78);
   --shadow:0 1px 0 rgba(20,32,43,.05), 0 10px 24px -18px rgba(20,32,43,.55);
 }
 @media (prefers-color-scheme: dark){
@@ -93,7 +96,7 @@ header p{margin:0;color:var(--ink2);font-size:13.5px;max-width:46ch}
 .gutter .lbl{font-family:Mitr,sans-serif;font-size:11.5px;color:var(--ink3);text-align:center;line-height:1.35}
 
 /* ---------- stage ---------- */
-.stage{background:var(--sunk);border:1.5px solid var(--line);
+.stage{background:var(--stage-bg);border:1.5px solid var(--line);
   aspect-ratio:5/4;touch-action:none;cursor:grab;overflow:hidden;
   display:flex;flex-direction:column;gap:6px;padding:8px;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -110,7 +113,7 @@ header p{margin:0;color:var(--ink2);font-size:13.5px;max-width:46ch}
   background:var(--surface);border:1px solid var(--line);padding:3px 9px;border-radius:2px}
 .stage .facing b{font-family:Mitr,sans-serif;font-weight:500}
 .stage .facing.on{border-color:var(--accent-line);background:var(--accent-soft);color:var(--accent)}
-.stage .hint{flex:0 0 auto;text-align:right;font-size:11.5px;color:var(--ink3)}
+.stage .hint{flex:0 0 auto;text-align:right;font-size:11.5px;color:var(--stage-ink)}
 .stage .pzchip{display:none;font-size:11.5px;background:var(--surface);
   border:1px solid var(--line);padding:3px 9px;border-radius:2px;color:var(--ink2);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -226,6 +229,8 @@ header p{margin:0;color:var(--ink2);font-size:13.5px;max-width:46ch}
 .card .meta{font-size:11.5px;color:var(--ink3)}
 .card .chips{display:flex;gap:3px;margin:3px 0 1px}
 .card .chips i{width:12px;height:12px;display:block;border:1px solid var(--ink);border-radius:1px}
+.card .newbadge{position:absolute;top:6px;right:8px;font-size:10px;line-height:1.5;
+  font-family:Mitr,sans-serif;color:#fff;background:var(--good);padding:0 6px;border-radius:2px}
 .card .tag{font-size:11px;color:var(--accent);border:1px solid var(--accent-line);
   background:var(--accent-soft);padding:0 6px;border-radius:2px;align-self:flex-start;margin-top:2px}
 .card .del{position:absolute;top:4px;right:4px;width:22px;height:22px;border:0;background:transparent;
@@ -312,10 +317,8 @@ footer .ver{display:block;margin-top:4px;font-family:"IBM Plex Mono",monospace;f
   .shelfbody{gap:10px}
   .group{gap:6px}
   .group h3{font-size:11.5px}
-  .cards{display:flex;overflow-x:auto;gap:8px;padding-bottom:4px;
-    scrollbar-width:none;scroll-snap-type:x proximity}
-  .cards::-webkit-scrollbar{display:none}
-  .card{flex:0 0 140px;padding:8px 10px;gap:1px;scroll-snap-align:start}
+  .cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .card{padding:8px 10px;gap:1px}
   .card .nm{font-size:13px;line-height:1.4}
   .card .meta{font-size:10.5px}
   .card .chips{margin:2px 0 0}
@@ -444,7 +447,7 @@ footer .ver{display:block;margin-top:4px;font-family:"IBM Plex Mono",monospace;f
   </section>
 
   <footer>สื่อฝึกมองภาพสามมิติ — ลากรูปทรงเพื่อหมุนดูได้ทุกด้าน กดปุ่ม <b>มุมเฉียง</b> เพื่อคืนตำแหน่งเดิม
-    <span class="ver">รุ่น B1 · จอกว้าง <b id="vwOut">–</b> px · <b id="layoutOut">–</b></span>
+    <span class="ver">รุ่น B2 · จอกว้าง <b id="vwOut">–</b> px · <b id="layoutOut">–</b></span>
   </footer>
 </div>
 
@@ -583,10 +586,11 @@ var STARTERS = [
       [0,2,0,"g"],[1,2,0,"g"],[2,2,0,"g"],
       [0,0,1,"k"],[2,0,1,"k"],[0,2,1,"k"],[2,2,1,"k"]],"front")
 ];
+STARTERS.slice(-8).forEach(function(p){ p.fresh = true; });
 var LEVELS = {1:"ระดับ 1 · เริ่มต้น", 2:"ระดับ 2 · ปานกลาง", 3:"ระดับ 3 · ท้าทาย"};
 function clonePz(p){
   return {name:p.name, lvl:p.lvl, w:p.w, d:p.d, h:p.h, cells:new Map(p.cells),
-          ask:p.ask, id:p.id, starter:p.starter};
+          ask:p.ask, id:p.id, starter:p.starter, fresh:p.fresh};
 }
 
 /* ---------- state ---------- */
@@ -622,7 +626,7 @@ function refreshPalette(){
   PAL.accent = hex2rgb(css("--accent") || "#C06810");
   PAL.ink = hex2rgb(css("--ink") || "#14202B");
   PAL.line = hex2rgb(css("--line2") || "#ABB8B1");
-  PAL.sunk = css("--sunk") || "#E6EAE4";
+  PAL.sunk = css("--stage-bg") || "#3A7079";
 }
 var EDGE_DARK = [22,30,37], EDGE_LIGHT = [223,231,234];
 var LIGHT = (function(){
@@ -726,7 +730,7 @@ function draw(){
 
   /* floor plate */
   var z0 = -oz-0.5;
-  ctx.strokeStyle = rgb(PAL.line,0.75); ctx.lineWidth = 1;
+  ctx.strokeStyle = css("--stage-line") || "rgba(255,255,255,.3)"; ctx.lineWidth = 1;
   ctx.beginPath();
   for (var i=0;i<=p.w;i++){
     var a = proj(i-ox-0.5, -oy-0.5, z0), b = proj(i-ox-0.5, p.d-oy-0.5, z0);
@@ -1254,6 +1258,11 @@ function makeCard(p, deletable){
   });
   var tg = document.createElement("span"); tg.className = "tag";
   tg.textContent = "ถาม" + VIEWS[p.ask].label;
+  if (p.fresh){
+    var nb = document.createElement("span");
+    nb.className = "newbadge"; nb.textContent = "ใหม่";
+    card.appendChild(nb);
+  }
   card.appendChild(nm); card.appendChild(mt); card.appendChild(ch); card.appendChild(tg);
   var open = function(){ loadPuzzle(p); };
   card.addEventListener("click", open);
