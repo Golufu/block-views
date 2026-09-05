@@ -232,21 +232,29 @@ header p{margin:0;color:var(--ink2);font-size:13.5px;max-width:46ch}
 footer{font-size:12px;color:var(--ink3);border-top:1px solid var(--line);padding-top:10px}
 
 @media (max-width:820px){
-  body{padding:14px 13px 28px}
-  .wrap{gap:14px}
-  h1{font-size:22px}
-  header{align-items:flex-start;padding-bottom:10px}
-  header .brand{flex-direction:column;gap:2px}
+  body{padding:10px 12px 26px}
+  .wrap{gap:10px}
+  h1{font-size:19px}
+  header{align-items:center;gap:10px;padding-bottom:8px}
+  header .brand{flex-direction:row;align-items:baseline;flex:1;min-width:0}
+  header p{display:none}
+  .modes button{padding:6px 13px;font-size:13.5px}
 
-  /* รูปทรงอยู่บน ตารางอยู่ล่าง */
-  .bench{grid-template-columns:1fr;gap:0}
-  .gutter{flex-direction:row;padding:6px 0}
-  .gutter svg{transform:rotate(90deg);width:26px;height:18px}
-  .gutter .lbl{display:none}
-  .panel > .head{padding:8px 12px}
-  .panel .body{padding:12px;gap:10px}
-  .stage{aspect-ratio:4/3}
+  /* รูปทรงอยู่บน ตารางอยู่ล่าง — ต้องเห็นครบในหน้าจอเดียว */
+  .bench{grid-template-columns:1fr;gap:8px}
+  .gutter{display:none}
+  .bench section:last-child > .head{display:none}
+  .panel > .head{padding:6px 12px}
+  .panel > .head h2{font-size:13px}
+  .panel .body{padding:10px;gap:8px}
+  .stage{aspect-ratio:auto;height:clamp(160px,26vh,220px);height:clamp(160px,26dvh,220px)}
   .stage .hint{display:none}
+  .askline{padding:6px 10px}
+  .askline .v{font-size:15px}
+  .gridwrap{padding:2px 0 0}
+  .axis{display:none}
+  .verdict{min-height:0}
+  .verdict:empty{display:none}
 
   /* ปุ่มด้านทั้งหมดอยู่แถวเดียว เลื่อนแนวนอน */
   .viewbar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
@@ -790,11 +798,30 @@ function renderGrid(){
   $("#axisHint").innerHTML = "<span>แนวนอน: <b>"+across+"</b></span><span>·</span><span>แนวตั้ง: <b>"+down+"</b></span>";
   $("#rightMeta").textContent = g.cols+" × "+g.rows+" ช่อง";
   refreshPlayPalette();
+  fitGridToScreen();
 }
 function refreshPlayPalette(){
   renderPalette($("#palPlay"), S.paintColor, true, function(cid){
     S.paintColor = cid; refreshPlayPalette();
   });
+}
+/* บนมือถือ: หดช่องตารางให้รูปทรงกับตารางอยู่ในหน้าจอเดียวโดยไม่ต้องเลื่อน */
+function fitGridToScreen(){
+  var pad = $("#grid"), acts = $("#playBody .actions");
+  if (!pad.children.length || !acts) return;
+  var cur = parseInt(pad.style.getPropertyValue("--cs"), 10) || 56;
+  var g = gridSpec(S.pz, S.pz.ask), cs = cur;
+  if (window.innerWidth <= 820 && window.scrollY < 40){
+    var top = pad.parentNode.getBoundingClientRect().top;
+    var avail = window.innerHeight - top - acts.offsetHeight - 26;
+    cs = Math.max(26, Math.min(cur, Math.floor((avail - 10)/g.rows)));
+  }
+  var wide = Math.floor((pad.parentNode.clientWidth - 16)/g.cols);
+  if (wide > 20) cs = Math.min(cs, wide);
+  if (cs !== cur){
+    pad.style.setProperty("--cs", cs+"px");
+    pad.style.gridTemplateColumns = "repeat("+g.cols+", "+cs+"px)";
+  }
 }
 var paintMode; // colour id, or null for erase
 function cellAt(x,y){
@@ -1208,10 +1235,19 @@ S.saved = loadSaved();
 S.build = clonePz(S.pz); S.build.starter = false; S.build.id = null;
 refreshPalette();
 if (window.ResizeObserver) new ResizeObserver(fit).observe(stage);
-window.addEventListener("resize", fit);
+window.addEventListener("resize", function(){
+  fit();
+  if (S.mode === "play") fitGridToScreen();
+});
+window.addEventListener("orientationchange", function(){
+  setTimeout(function(){ fit(); if (S.mode === "play") fitGridToScreen(); }, 250);
+});
 var dm = window.matchMedia("(prefers-color-scheme: dark)");
 if (dm.addEventListener) dm.addEventListener("change", function(){ refreshPalette(); draw(); });
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){
+  fit();
+  if (S.mode === "play") fitGridToScreen();
+});
 renderAll();
 fit();
 })();
