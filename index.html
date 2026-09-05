@@ -98,6 +98,11 @@ header p{margin:0;color:var(--ink2);font-size:13.5px;max-width:46ch}
   display:flex;flex-direction:column;gap:6px;padding:8px;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .stage.dragging{cursor:grabbing}
+.stage.locked{cursor:default}
+.vbtn:disabled,.ghost:disabled{opacity:.42;cursor:not-allowed}
+.vbtn:disabled:hover,.ghost:disabled:hover{border-color:var(--line2);color:var(--ink2);border-style:dashed}
+.stage .pzchip.locked{display:block;border-color:var(--accent-line);
+  background:var(--accent-soft);color:var(--accent);font-family:inherit}
 .stagebar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:0 0 auto}
 .canvasbox{position:relative;flex:1 1 auto;min-height:0}
 .canvasbox canvas{position:absolute;inset:0;display:block;width:100%;height:100%}
@@ -439,7 +444,7 @@ footer .ver{display:block;margin-top:4px;font-family:"IBM Plex Mono",monospace;f
   </section>
 
   <footer>สื่อฝึกมองภาพสามมิติ — ลากรูปทรงเพื่อหมุนดูได้ทุกด้าน กดปุ่ม <b>มุมเฉียง</b> เพื่อคืนตำแหน่งเดิม
-    <span class="ver">รุ่น A9 · จอกว้าง <b id="vwOut">–</b> px · <b id="layoutOut">–</b></span>
+    <span class="ver">รุ่น B1 · จอกว้าง <b id="vwOut">–</b> px · <b id="layoutOut">–</b></span>
   </footer>
 </div>
 
@@ -558,7 +563,25 @@ var STARTERS = [
   mk("ลานสามระดับ",3,3,3,3,slab(3,3,0,"w").concat([[0,0,1,"g"],[1,0,1,"g"],[0,1,1,"g"],[1,1,1,"g"],
       [0,0,2,"k"]]),"left"),
   mk("ประตูโค้ง",3,3,1,3,[[0,0,0,"k"],[2,0,0,"k"],[0,0,1,"k"],[2,0,1,"k"],
-      [0,0,2,"g"],[1,0,2,"g"],[2,0,2,"g"]],"front")
+      [0,0,2,"g"],[1,0,2,"g"],[2,0,2,"g"]],"front"),
+
+  /* ชุดที่ฐานไม่เป็นสี่เหลี่ยมและสลับสีไม่เป็นชั้น แบบใบงานกระดาษ */
+  mk("จานสามสี",2,3,3,1,[[1,0,0,"w"],[0,1,0,"g"],[1,1,0,"k"],[2,1,0,"g"],[1,2,0,"w"]],"top"),
+  mk("ตัวยู",2,3,2,2,[[0,0,0,"k"],[1,0,0,"k"],[2,0,0,"k"],[1,1,0,"g"],
+      [0,0,1,"w"],[2,0,1,"w"]],"front"),
+  mk("ดอกไม้",2,3,3,2,[[1,0,0,"g"],[0,1,0,"g"],[1,1,0,"k"],[2,1,0,"g"],[1,2,0,"g"],
+      [1,1,1,"w"]],"top"),
+  mk("เก้าอี้ยาว",2,4,2,2,[[0,0,0,"w"],[1,0,0,"w"],[2,0,0,"w"],[3,0,0,"w"],
+      [0,1,0,"w"],[3,1,0,"w"],[0,1,1,"k"],[3,1,1,"k"]],"right"),
+  mk("บันไดสลับสี",2,3,2,2,[[0,0,0,"k"],[1,0,0,"w"],[2,0,0,"k"],
+      [0,1,0,"w"],[1,1,0,"k"],[2,1,0,"w"],[0,0,1,"w"],[0,1,1,"k"]],"left"),
+  mk("งูเลื้อย",3,4,2,2,[[0,0,0,"k"],[1,0,0,"k"],[1,1,0,"w"],[2,1,0,"w"],[3,1,0,"g"],
+      [0,0,1,"k"],[3,1,1,"g"]],"front"),
+  mk("บันไดเฉียง",3,3,3,3,[[0,0,0,"w"],[1,0,0,"w"],[1,1,0,"g"],[2,1,0,"g"],[2,2,0,"k"],
+      [1,1,1,"g"],[2,2,1,"k"],[2,2,2,"k"]],"right"),
+  mk("ป้อมปราการ",3,3,3,2,[[0,0,0,"g"],[1,0,0,"g"],[2,0,0,"g"],[0,1,0,"g"],[2,1,0,"g"],
+      [0,2,0,"g"],[1,2,0,"g"],[2,2,0,"g"],
+      [0,0,1,"k"],[2,0,1,"k"],[0,2,1,"k"],[2,2,1,"k"]],"front")
 ];
 var LEVELS = {1:"ระดับ 1 · เริ่มต้น", 2:"ระดับ 2 · ปานกลาง", 3:"ระดับ 3 · ท้าทาย"};
 function clonePz(p){
@@ -574,8 +597,10 @@ var S = {
   yaw: ISO.yaw, pitch: ISO.pitch, zoom: 1,
   ans: {}, marks: null, revealed: false,
   saved: [], armed: null,
-  paintColor: "k", brush: "k"
+  paintColor: "k", brush: "k",
+  locked: true            /* หมุนไม่ได้จนกว่าจะกดตรวจคำตอบหรือดูเฉลย */
 };
+function isLocked(){ return S.mode === "play" && S.locked; }
 S.pz.id = "s0";
 
 /* ---------- canvas ---------- */
@@ -594,6 +619,7 @@ function rgb(c,a){
   return a === undefined ? "rgb("+s+")" : "rgba("+s+","+a+")";
 }
 function refreshPalette(){
+  PAL.accent = hex2rgb(css("--accent") || "#C06810");
   PAL.ink = hex2rgb(css("--ink") || "#14202B");
   PAL.line = hex2rgb(css("--line2") || "#ABB8B1");
   PAL.sunk = css("--sunk") || "#E6EAE4";
@@ -618,6 +644,55 @@ var FACES = [
   {n:[0,1,0],  v:[[0,1,0],[0,1,1],[1,1,1],[1,1,0]]},
   {n:[0,-1,0], v:[[0,0,0],[1,0,0],[1,0,1],[0,0,1]]}
 ];
+/* ลูกศรชี้ว่าโจทย์ให้มองรูปทรงจากทางไหน — อยู่ในพิกัดสามมิติ หมุนตามรูปทรง */
+function arrowGeom(p, view){
+  var a = frame(VIEWS[view].yaw, VIEWS[view].pitch).d;     /* ทิศจากตาผู้มองเข้าหารูป */
+  var half = 0.5*(p.w*Math.abs(a[0]) + p.d*Math.abs(a[1]) + p.h*Math.abs(a[2]));
+  var far = half + 2.35, near = half + 0.55;
+  var mid = (far - half)/2;                                /* เลื่อนจุดกึ่งกลางภาพเผื่อที่ให้ลูกศร */
+  return {a:a, half:half, far:far, span:far + half,
+    ctr:[-a[0]*mid, -a[1]*mid, -a[2]*mid],
+    p0:[-a[0]*far, -a[1]*far, -a[2]*far],
+    p1:[-a[0]*near, -a[1]*near, -a[2]*near]};
+}
+function drawArrow(ctx, proj, sc, geom){
+  var s0 = proj(geom.p0[0], geom.p0[1], geom.p0[2]);
+  var s1 = proj(geom.p1[0], geom.p1[1], geom.p1[2]);
+  var dx = s1[0]-s0[0], dy = s1[1]-s0[1], len = Math.hypot(dx, dy);
+  var col = rgb(PAL.accent), halo = PAL.sunk;
+  ctx.save();
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  if (len < Math.max(18, sc*0.36)){
+    /* มองตรงตามแนวลูกศรพอดี — วาดเป็นเป้าเล็งแทน */
+    var rr = Math.max(10, sc*0.24), lw = Math.max(3, sc*0.06);
+    ctx.strokeStyle = halo; ctx.lineWidth = lw + 5;
+    ctx.beginPath(); ctx.arc(s1[0], s1[1], rr, 0, Math.PI*2); ctx.stroke();
+    ctx.strokeStyle = col; ctx.lineWidth = lw;
+    ctx.beginPath(); ctx.arc(s1[0], s1[1], rr, 0, Math.PI*2); ctx.stroke();
+    ctx.fillStyle = halo;
+    ctx.beginPath(); ctx.arc(s1[0], s1[1], rr*0.42, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(s1[0], s1[1], rr*0.3, 0, Math.PI*2); ctx.fill();
+  } else {
+    var ux = dx/len, uy = dy/len;
+    var head = Math.min(len*0.5, Math.max(12, sc*0.36));
+    var wing = head*0.6;
+    var shaft = Math.max(4, sc*0.13);
+    var tail = [s1[0]-ux*head*0.9, s1[1]-uy*head*0.9];
+    var wingA = [s1[0]-ux*head + uy*wing, s1[1]-uy*head - ux*wing];
+    var wingB = [s1[0]-ux*head - uy*wing, s1[1]-uy*head + ux*wing];
+    ctx.strokeStyle = halo; ctx.lineWidth = shaft + 5;
+    ctx.beginPath(); ctx.moveTo(s0[0], s0[1]); ctx.lineTo(tail[0], tail[1]); ctx.stroke();
+    ctx.strokeStyle = col; ctx.lineWidth = shaft;
+    ctx.beginPath(); ctx.moveTo(s0[0], s0[1]); ctx.lineTo(tail[0], tail[1]); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(s1[0], s1[1]); ctx.lineTo(wingA[0], wingA[1]); ctx.lineTo(wingB[0], wingB[1]);
+    ctx.closePath();
+    ctx.strokeStyle = halo; ctx.lineWidth = 5; ctx.stroke();
+    ctx.fillStyle = col; ctx.fill();
+  }
+  ctx.restore();
+}
 function dpr(){ return Math.min(window.devicePixelRatio || 1, 2); }
 function fit(){
   var r = canvasBox.getBoundingClientRect(), k = dpr();
@@ -634,12 +709,17 @@ function draw(){
   ctx.clearRect(0,0,W,H);
   ctx.fillStyle = PAL.sunk; ctx.fillRect(0,0,W,H);
   var f = frame(S.yaw, S.pitch), d = f.d, u = f.u, r = f.r;
+  var ag = arrowGeom(p, p.ask), ctr = ag.ctr;
   var diag = Math.hypot(p.w, p.d);
   var cb = Math.abs(Math.cos(S.pitch*RAD)), sb = Math.abs(Math.sin(S.pitch*RAD));
-  var spanX = diag, spanY = p.h*cb + diag*sb;
+  var upright = Math.abs(ag.a[2]) > 0.5;                 /* โจทย์ถามด้านบน/ล่าง */
+  var horizExt = upright ? diag : Math.max(diag, ag.span);
+  var vertExt = upright ? ag.span : p.h;
+  var spanX = horizExt, spanY = vertExt*cb + horizExt*sb;
   var sc = Math.min(W/spanX, H/spanY)*0.92*S.zoom;
   var cx = W/2, cy = H/2;
   function proj(x,y,z){
+    x -= ctr[0]; y -= ctr[1]; z -= ctr[2];
     return [ (x*r[0]+y*r[1]+z*r[2])*sc + cx, -(x*u[0]+y*u[1]+z*u[2])*sc + cy ];
   }
   var ox = (p.w-1)/2, oy = (p.d-1)/2, oz = (p.h-1)/2;
@@ -657,6 +737,10 @@ function draw(){
     ctx.moveTo(c1[0],c1[1]); ctx.lineTo(e[0],e[1]);
   }
   ctx.stroke();
+
+  /* ลูกศรบอกด้านที่โจทย์ถาม */
+  var arrowBehind = (ag.a[0]*d[0] + ag.a[1]*d[1] + ag.a[2]*d[2]) < -0.05;
+  if (arrowBehind) drawArrow(ctx, proj, sc, ag);
 
   /* blocks, far to near */
   var list = [];
@@ -686,6 +770,7 @@ function draw(){
       ctx.fillStyle = rgb(col); ctx.fill(); ctx.stroke();
     }
   }
+  if (!arrowBehind) drawArrow(ctx, proj, sc, ag);
   updateFacing();
 }
 
@@ -728,8 +813,13 @@ function step(ts){
   draw();
   if (t < 1) requestAnimationFrame(step); else { anim = null; }
 }
-function goView(v){ anim = null; animateTo(VIEWS[v].yaw, VIEWS[v].pitch); }
-function goIso(){ anim = null; S.zoom = 1; animateTo(ISO.yaw, ISO.pitch); }
+function goView(v){ if (isLocked()) return; anim = null; animateTo(VIEWS[v].yaw, VIEWS[v].pitch); }
+function goIso(){ if (isLocked()) return; anim = null; S.zoom = 1; animateTo(ISO.yaw, ISO.pitch); }
+function setLocked(on){
+  S.locked = on;
+  stage.classList.toggle("locked", isLocked());
+  renderViewbar(); updateHead();
+}
 
 /* one finger orbits, two fingers pinch to zoom */
 var pts = new Map(), pinch = null;
@@ -738,6 +828,7 @@ function spread(){
   return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
 }
 stage.addEventListener("pointerdown", function(e){
+  if (isLocked()) return;
   anim = null;
   stage.setPointerCapture(e.pointerId);
   pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
@@ -782,6 +873,7 @@ function renderViewbar(){
     b.className = "vbtn" + (S.mode === "play" && v === p.ask ? " ask" : "");
     b.dataset.view = v; b.type = "button";
     b.textContent = VIEWS[v].label;
+    b.disabled = isLocked();
     b.setAttribute("aria-pressed","false");
     b.addEventListener("click", function(){ goView(v); });
     bar.appendChild(b);
@@ -789,6 +881,7 @@ function renderViewbar(){
   var sp = document.createElement("span"); sp.className = "spacer"; bar.appendChild(sp);
   var rb = document.createElement("button");
   rb.type = "button"; rb.className = "ghost"; rb.textContent = "↺ มุมเฉียง (รีเซ็ต)";
+  rb.disabled = isLocked();
   rb.addEventListener("click", goIso);
   bar.appendChild(rb);
   updateFacing();
@@ -912,7 +1005,7 @@ function checkAnswer(){
   var pat = projectSet(p, view), o = boxOffset(p, view), g = o.g, b = o.b;
   var keys = Object.keys(pat), ansKeys = Object.keys(S.ans);
   if (!ansKeys.length){
-    setVerdict("ยังไม่ได้ระบายสักช่อง ลองดูรูปทรงทางซ้ายแล้วระบายดูครับ", "note");
+    setVerdict("ยังไม่ได้ระบายสักช่อง — ระบายก่อนแล้วกดตรวจคำตอบ จึงจะหมุนรูปทรงดูได้", "note");
     return;
   }
   /* ระบายไว้ตรงไหนของตารางก็ได้ — หาตำแหน่งที่ตรงกับคำตอบมากที่สุดก่อนตรวจ */
@@ -944,6 +1037,7 @@ function checkAnswer(){
   ansKeys.forEach(function(k){ if (!covered[k]){ marks[k] = "extra"; extra++; } });
   S.marks = marks; S.revealed = false;
   restyleAll();
+  setLocked(false);
   if (!extra && !missing && !wrong){
     setVerdict("ถูกทั้งหมด " + keys.length + " ช่อง — เก่งมาก!", "good");
   } else {
@@ -962,6 +1056,7 @@ function revealAnswer(){
   });
   S.ans = out; S.marks = null; S.revealed = true;
   restyleAll();
+  setLocked(false);
   goView(p.ask);
   setVerdict("นี่คือเฉลย — รูปทรงหมุนไปอยู่ที่" + VIEWS[p.ask].label + "แล้ว ลองเทียบสีทีละช่องดู", "note");
 }
@@ -1209,7 +1304,12 @@ function updateHead(){
   var p = currentPz();
   $("#pzName").textContent = S.mode === "build" ? "รูปทรงที่กำลังสร้าง" : p.name;
   $("#pzMeta").textContent = p.w+"×"+p.d+"×"+p.h + " · " + p.cells.size + " ก้อน";
-  $("#pzChip").textContent = (S.mode === "build" ? "กำลังสร้าง" : p.name) + " · " + p.cells.size + " ก้อน";
+  var chip = $("#pzChip");
+  stage.classList.toggle("locked", isLocked());
+  chip.classList.toggle("locked", isLocked());
+  chip.textContent = isLocked()
+    ? "ล็อกการหมุน — ตรวจคำตอบก่อน"
+    : (S.mode === "build" ? "กำลังสร้าง" : p.name) + " · " + p.cells.size + " ก้อน";
   $("#rightTitle").textContent = S.mode === "build" ? "แบบร่างโจทย์" : "ตารางคำตอบ";
   if (S.mode === "build") $("#rightMeta").textContent = "ผังทีละชั้น";
   $("#askName").textContent = VIEWS[S.pz.ask].label;
@@ -1233,7 +1333,7 @@ function renderAll(){
 function loadPuzzle(p){
   S.pz = clonePz(p);
   S.build = clonePz(p); S.build.starter = false; S.build.id = null;
-  S.armed = null;
+  S.armed = null; S.locked = true;
   clearGrid();
   $("#shelfNote").textContent = "แตะการ์ดเพื่อเปลี่ยนรูปทรง";
   setMode("play");
@@ -1257,7 +1357,9 @@ $("#btnCheck").addEventListener("click", checkAnswer);
 $("#btnClear").addEventListener("click", clearGrid);
 $("#btnReveal").addEventListener("click", revealAnswer);
 $("#askSel").addEventListener("change", function(){
-  S.pz.ask = this.value; clearGrid(); renderAll();
+  S.pz.ask = this.value; S.locked = true;
+  S.zoom = 1; anim = null; S.yaw = ISO.yaw; S.pitch = ISO.pitch;
+  clearGrid(); renderAll();
 });
 $("#askSel2").addEventListener("change", function(){ S.build.ask = this.value; renderViewbar(); });
 $("#nmIn").addEventListener("input", function(){ S.build.name = this.value; });
@@ -1270,7 +1372,7 @@ $("#btnUse").addEventListener("click", function(){
   var p = clonePz(S.build);
   p.name = (S.build.name || "").trim() || "โจทย์ของฉัน";
   p.id = "draft"; p.starter = false;
-  S.pz = p; clearGrid(); setMode("play");
+  S.pz = p; S.locked = true; clearGrid(); setMode("play");
   S.zoom = 1; anim = null; S.yaw = ISO.yaw; S.pitch = ISO.pitch;
   renderAll();
 });
