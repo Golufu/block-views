@@ -93,20 +93,22 @@ header p{margin:0;color:var(--ink2);font-size:13.5px;max-width:46ch}
 .gutter .lbl{font-family:Mitr,sans-serif;font-size:11.5px;color:var(--ink3);text-align:center;line-height:1.35}
 
 /* ---------- stage ---------- */
-.stage{position:relative;background:var(--sunk);border:1.5px solid var(--line);
+.stage{background:var(--sunk);border:1.5px solid var(--line);
   aspect-ratio:5/4;touch-action:none;cursor:grab;overflow:hidden;
+  display:flex;flex-direction:column;gap:6px;padding:8px;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .stage.dragging{cursor:grabbing}
-.stage canvas{display:block;width:100%;height:100%}
-.stage .facing{position:absolute;left:10px;top:10px;display:flex;align-items:center;gap:7px;
-  font-size:12px;background:color-mix(in srgb,var(--surface) 88%,transparent);
-  border:1px solid var(--line);padding:3px 9px;border-radius:2px}
+.stagebar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:0 0 auto}
+.canvasbox{position:relative;flex:1 1 auto;min-height:0}
+.canvasbox canvas{position:absolute;inset:0;display:block;width:100%;height:100%}
+.stage .facing{display:flex;align-items:center;gap:7px;font-size:12px;
+  background:var(--surface);border:1px solid var(--line);padding:3px 9px;border-radius:2px}
 .stage .facing b{font-family:Mitr,sans-serif;font-weight:500}
 .stage .facing.on{border-color:var(--accent-line);background:var(--accent-soft);color:var(--accent)}
-.stage .hint{position:absolute;right:10px;bottom:9px;font-size:11.5px;color:var(--ink3)}
-.stage .pzchip{display:none;position:absolute;right:10px;top:10px;font-size:11.5px;
-  background:color-mix(in srgb,var(--surface) 88%,transparent);border:1px solid var(--line);
-  padding:3px 9px;border-radius:2px;color:var(--ink2)}
+.stage .hint{flex:0 0 auto;text-align:right;font-size:11.5px;color:var(--ink3)}
+.stage .pzchip{display:none;font-size:11.5px;background:var(--surface);
+  border:1px solid var(--line);padding:3px 9px;border-radius:2px;color:var(--ink2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .taskrow{display:flex;flex-direction:column;gap:12px}
 .askline .qs{display:none}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--ink3);flex:0 0 auto}
@@ -262,7 +264,8 @@ footer .ver{display:block;margin-top:4px;font-family:"IBM Plex Mono",monospace;f
   .panel .body{padding:0;gap:6px}
 
   /* กล่องใหญ่ขึ้น ชื่อโจทย์ย้ายมาลอยบนเวที */
-  .stage{aspect-ratio:auto;height:clamp(170px,30vh,290px);height:clamp(170px,30dvh,290px)}
+  .stage{aspect-ratio:auto;height:clamp(190px,33vh,320px);height:clamp(190px,33dvh,320px);
+    padding:6px;gap:5px}
   .stage .hint{display:none}
   .stage .pzchip{display:block}
 
@@ -345,9 +348,11 @@ footer .ver{display:block;margin-top:4px;font-family:"IBM Plex Mono",monospace;f
       </div>
       <div class="body">
         <div class="stage" id="stage">
-          <canvas id="cv"></canvas>
-          <div class="facing" id="facing"><span class="dot"></span><span>กำลังมอง <b>มุมเฉียง</b></span></div>
-          <div class="pzchip num" id="pzChip"></div>
+          <div class="stagebar">
+            <div class="facing" id="facing"><span class="dot"></span><span>กำลังมอง <b>มุมเฉียง</b></span></div>
+            <div class="pzchip num" id="pzChip"></div>
+          </div>
+          <div class="canvasbox" id="canvasBox"><canvas id="cv"></canvas></div>
           <div class="hint">ลากเพื่อหมุน · ล้อเมาส์หรือสองนิ้วเพื่อย่อ–ขยาย</div>
         </div>
         <div class="viewbar" id="viewbar"></div>
@@ -434,7 +439,7 @@ footer .ver{display:block;margin-top:4px;font-family:"IBM Plex Mono",monospace;f
   </section>
 
   <footer>สื่อฝึกมองภาพสามมิติ — ลากรูปทรงเพื่อหมุนดูได้ทุกด้าน กดปุ่ม <b>มุมเฉียง</b> เพื่อคืนตำแหน่งเดิม
-    <span class="ver">รุ่น A8 · จอกว้าง <b id="vwOut">–</b> px · <b id="layoutOut">–</b></span>
+    <span class="ver">รุ่น A9 · จอกว้าง <b id="vwOut">–</b> px · <b id="layoutOut">–</b></span>
   </footer>
 </div>
 
@@ -574,7 +579,7 @@ var S = {
 S.pz.id = "s0";
 
 /* ---------- canvas ---------- */
-var cv = $("#cv"), ctx = cv.getContext("2d"), stage = $("#stage");
+var cv = $("#cv"), ctx = cv.getContext("2d"), stage = $("#stage"), canvasBox = $("#canvasBox");
 var PAL = {};
 function css(n){ return getComputedStyle(document.body).getPropertyValue(n).trim(); }
 function hex2rgb(h){
@@ -615,7 +620,7 @@ var FACES = [
 ];
 function dpr(){ return Math.min(window.devicePixelRatio || 1, 2); }
 function fit(){
-  var r = stage.getBoundingClientRect(), k = dpr();
+  var r = canvasBox.getBoundingClientRect(), k = dpr();
   cv.width = Math.max(1, Math.round(r.width*k));
   cv.height = Math.max(1, Math.round(r.height*k));
   ctx.setTransform(k,0,0,k,0,0);
@@ -692,8 +697,8 @@ function facingView(){
   var y = ((S.yaw % 360) + 360) % 360, best = null;
   VIEW_ORDER.forEach(function(v){
     if (Math.abs(VIEWS[v].pitch) > 0) return;
-    var diff = Math.abs(((y - VIEWS[v].yaw + 540) % 360) - 180);
-    if (180 - diff < 4) best = v;
+    var diff = Math.abs(((y - VIEWS[v].yaw + 180) % 360) - 180);
+    if (diff < 4) best = v;
   });
   return best;
 }
@@ -1307,7 +1312,7 @@ fillSelect($("#askSel")); fillSelect($("#askSel2"));
 S.saved = loadSaved();
 S.build = clonePz(S.pz); S.build.starter = false; S.build.id = null;
 refreshPalette();
-if (window.ResizeObserver) new ResizeObserver(fit).observe(stage);
+if (window.ResizeObserver) new ResizeObserver(fit).observe(canvasBox);
 window.addEventListener("resize", function(){
   fit();
   if (S.mode === "play") fitGridToScreen();
